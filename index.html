@@ -3,80 +3,119 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Celencia Campaign Index</title>
+  <title>Celencia • Index</title>
   <style>
-    body { margin:0; font: 15px/1.5 system-ui, sans-serif; background:#0b0d10; color:#e8ecf1; }
-    header { padding:20px; background:#12161c; border-bottom:1px solid #1e2630; }
-    h1 { margin:0; font-size:24px; }
-    .wrap { max-width:1100px; margin:20px auto; padding:0 16px; }
-    input { width:100%; max-width:400px; padding:10px; margin:12px 0; background:#0e1217; border:1px solid #1e2630; border-radius:8px; color:#e8ecf1; }
-    table { width:100%; border-collapse:collapse; margin-top:20px; }
-    th, td { padding:10px; border-bottom:1px solid #1e2630; text-align:left; }
-    th { background:#12161c; position:sticky; top:0; }
-    a { color:#70b0ff; text-decoration:none; }
-    a:hover { text-decoration:underline; }
-    .muted { color:#9fb2c8; font-size:13px; }
-    .folder { font-weight:bold; color:#9fd2ff; }
+    body{margin:0;background:#0b0d10;color:#e8ecf1;font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto}
+    header{padding:14px 18px;background:#12161c;border-bottom:1px solid #1e2630}
+    h1{margin:0;font-size:20px}
+    .wrap{max-width:1100px;margin:16px auto;padding:0 16px}
+    input{width:100%;max-width:400px;padding:10px;margin:12px 0;background:#0e1217;color:#e8ecf1;border:1px solid #1e2630;border-radius:8px}
+    details{border:1px solid #1e2630;border-radius:8px;margin:6px 0;background:#0f141a}
+    details>summary{cursor:pointer;padding:6px 10px;font-weight:600;color:#9fd2ff}
+    details>summary::-webkit-details-marker{display:none}
+    ul{margin:0 0 8px 20px;padding:0}
+    li{list-style:none;padding:4px 0;display:flex;gap:8px;align-items:center}
+    .name{font-family:ui-monospace,Menlo,Consolas,monospace}
+    .badge{color:#9fb2c8;font-size:12px}
+    a{color:#70b0ff;text-decoration:none}
+    a:hover{text-decoration:underline}
+    .toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+    .toolbar .btn{border:1px solid #1e2630;background:#1a2330;color:#e8ecf1;border-radius:8px;padding:8px 10px;cursor:pointer}
   </style>
 </head>
 <body>
-  <header>
-    <h1>Celencia Campaign Index</h1>
-    <p class="muted">Search and browse everything in <code>main</code>. Click a folder name to filter to its contents.</p>
-  </header>
-  <div class="wrap">
-    <input id="q" placeholder="Search files by name..." />
-    <table id="tbl">
-      <thead>
-        <tr><th>Name</th><th>Type</th><th>Size</th><th>Link</th></tr>
-      </thead>
-      <tbody></tbody>
-    </table>
+<header>
+  <h1>Celencia Repo Index</h1>
+  <div class="muted">Scans the repo live via GitHub API. New files appear automatically.</div>
+</header>
+<div class="wrap">
+  <div class="toolbar">
+    <input id="q" placeholder="Search (e.g. Session, .html, Celencia/)" />
+    <button class="btn" id="expandAll">Expand all</button>
+    <button class="btn" id="collapseAll">Collapse all</button>
   </div>
-  <script>
-    let files=[];
-    let currentFilter="";
+  <div id="tree"></div>
+</div>
+<script>
+const owner='ProfCory', repo='Celencia', ref='main';
+let flat=[],q="";
 
-    async function fetchRepo(){
-      const owner = 'ProfCory';
-      const repo = 'Celencia';
-      const ref = 'main';
-      const listUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/${ref}?recursive=1`;
-      const res = await fetch(listUrl);
-      if(!res.ok){ console.error('API fail'); return; }
-      const data = await res.json();
-      files = data.tree.filter(x=>x.type==='blob');
-      render(files);
+function toBlob(p){return `https://github.com/${owner}/${repo}/blob/${ref}/${p}`}
+function toRaw(p){return `https://raw.githubusercontent.com/${owner}/${repo}/${ref}/${p}`}
+function toPage(p){return p} // relative links when hosted on Pages
+
+async function fetchTree(){
+  const url=`https://api.github.com/repos/${owner}/${repo}/git/trees/${ref}?recursive=1`;
+  const res=await fetch(url);
+  if(!res.ok){document.getElementById('tree').textContent='Failed to fetch tree.';return}
+  const data=await res.json();
+  flat=(data.tree||[]).filter(n=>n.type==='blob');
+  render();
+}
+
+function buildTree(files){
+  const root={folders:new Map(),files:[]};
+  for(const f of files){
+    const parts=f.path.split('/');
+    let cur=root;
+    for(let i=0;i<parts.length-1;i++){
+      const part=parts[i];
+      if(!cur.folders.has(part)) cur.folders.set(part,{folders:new Map(),files:[]});
+      cur=cur.folders.get(part);
     }
+    cur.files.push(f);
+  }
+  return root;
+}
 
-    function render(list){
-      const q = document.getElementById('q').value.toLowerCase();
-      const tbody = document.querySelector('#tbl tbody');
-      let view = list;
-      if(currentFilter){
-        view = view.filter(f=>f.path.startsWith(currentFilter));
-      }
-      tbody.innerHTML = view.filter(f=>!q || f.path.toLowerCase().includes(q))
-        .map(f=>{
-          const raw = `https://raw.githubusercontent.com/ProfCory/Celencia/main/${f.path}`;
-          const parts = f.path.split('/');
-          const folder = parts.length>1 ? parts[0] : '';
-          const folderLink = folder ? `<span class="folder" onclick="filterFolder('${folder}')">${folder}</span>/` : '';
-          return `<tr><td>${folderLink}${parts.slice(1).join('/')||parts[0]}</td><td>${f.type}</td><td>${f.size??''}</td><td><a href="${raw}" target="_blank">raw</a></td></tr>`;
-        }).join('');
-    }
+function render(){
+  const tree=buildTree(flat);
+  const ql=q.toLowerCase();
+  const el=document.getElementById('tree');
+  el.innerHTML='';
+  for(const [name,node] of tree.folders){el.appendChild(renderFolder(name,node,ql))}
+  if(tree.files.length){el.appendChild(renderFiles('/',tree.files,ql))}
+}
 
-    function filterFolder(folder){
-      if(currentFilter===folder){
-        currentFilter="";
-      } else {
-        currentFilter=folder;
-      }
-      render(files);
-    }
+function renderFolder(name,node,ql){
+  const d=document.createElement('details');
+  d.innerHTML=`<summary>${name}</summary>`;
+  for(const [n,ch] of node.folders) d.appendChild(renderFolder(n,ch,ql));
+  d.appendChild(renderFiles(name,node.files,ql));
+  if(ql && hasMatch(node,ql)) d.open=true;
+  return d;
+}
 
-    document.getElementById('q').addEventListener('input', ()=>render(files));
-    fetchRepo();
-  </script>
+function hasMatch(node,ql){
+  if(node.files.some(f=>f.path.toLowerCase().includes(ql))) return true;
+  for(const ch of node.folders.values()) if(hasMatch(ch,ql)) return true;
+  return false;
+}
+
+function renderFiles(folder,files,ql){
+  const ul=document.createElement('ul');
+  for(const f of files){
+    if(ql && !f.path.toLowerCase().includes(ql)) continue;
+    const li=document.createElement('li');
+    const ext=(f.path.match(/\.([a-z0-9]+)$/i)||[])[1];
+    const isHTML=ext && ext.toLowerCase()==='html';
+    const open=isHTML?`<a href="${toPage(f.path)}" target="_blank">open</a>`:'';
+    li.innerHTML=`<span class=name>${f.path.split('/').pop()}</span>
+    <span class=badge>${(f.size/1024).toFixed(1)}kb</span>
+    ${open} <a href="${toBlob(f.path)}" target="_blank">blob</a> <a href="${toRaw(f.path)}" target="_blank">raw</a>`;
+    ul.appendChild(li);
+  }
+  return ul;
+}
+
+// controls
+const qEl=document.getElementById('q');
+qEl.addEventListener('input',()=>{q=qEl.value;render()});
+
+document.getElementById('expandAll').onclick=()=>document.querySelectorAll('#tree details').forEach(d=>d.open=true);
+document.getElementById('collapseAll').onclick=()=>document.querySelectorAll('#tree details').forEach(d=>d.open=false);
+
+fetchTree();
+</script>
 </body>
 </html>
