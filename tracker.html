@@ -1,55 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Celencia — Session Tracker</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Celencia — Session Tracker (Patched)</title>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
     :root{
-      --bg:#1b1711;           /* tavern walls */
-      --paper:#efe6ce;        /* parchment */
-      --ink:#2b2b2b;          /* ink */
-      --ink-soft:#5c5648;
-      --edge:#d2c7a3;         /* deckled edge */
-      --gold:#d6a645;         /* accent */
-      --blood:#ad3a3a;        /* danger */
-      --forest:#2f7f5f;       /* location */
-      --arc:#7b5fb5;          /* arc */
-      --hook:#c77c2e;         /* hook */
-      --loot:#6b7280;         /* loot */
+      --bg:#1b1711; --paper:#efe6ce; --ink:#2b2b2b; --ink-soft:#5c5648; --edge:#d2c7a3;
+      --gold:#d6a645; --blood:#ad3a3a; --forest:#2f7f5f; --arc:#7b5fb5; --hook:#c77c2e; --loot:#6b7280;
     }
-    html,body{height:100%}
     body{margin:0;background:var(--bg);font:14px/1.5 Inter,system-ui,sans-serif;color:var(--paper)}
     header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px;border-bottom:1px solid #2a241a;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(0,0,0,.1))}
     h1{margin:0;font:700 28px/1.1 Cinzel,serif;letter-spacing:.5px}
     .wrap{max-width:1200px;margin:20px auto 60px;padding:0 16px}
     .btn{border:1px solid var(--edge);background:rgba(239,230,206,.08);color:var(--paper);border-radius:10px;padding:9px 12px;cursor:pointer}
     .btn:hover{background:rgba(239,230,206,.15)}
-    .cards{display:grid;grid-template-columns:1fr;gap:14px}
-    @media(min-width:1100px){.cards{grid-template-columns:1.1fr .9fr}}
     .card{background:radial-gradient(1200px 300px at -10% -10%,rgba(255,255,255,.06),transparent),
                    radial-gradient(800px 300px at 110% 0%,rgba(255,255,255,.04),transparent),
-                   var(--paper);
-          color:var(--ink);border:1px solid var(--edge);border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.35)}
-    .card .hd{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px dashed var(--edge)}
-    .card .bd{padding:12px 14px}
-    .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+                   var(--paper); color:var(--ink);border:1px solid var(--edge);border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.35)}
+    .hd{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px dashed var(--edge)}
+    .bd{padding:12px 14px}
     table{width:100%;border-collapse:collapse}
     th,td{padding:10px;border-bottom:1px dashed var(--edge);vertical-align:top}
     th{font:700 12px/1.2 Cinzel,serif;text-transform:uppercase;letter-spacing:.6px;color:#5e4a2e;background:linear-gradient(180deg,rgba(0,0,0,.03),transparent)}
     a{color:#0a58a6;text-decoration:none}
     a:hover{text-decoration:underline}
-    .pill{display:inline-block;border:1px solid var(--edge);border-radius:999px;padding:2px 8px;margin:2px 6px 0 0;color:#664f23;background:rgba(214,166,69,.18)}
     .legend{display:flex;gap:8px;flex-wrap:wrap}
     .chip{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;border:1px solid var(--edge);background:rgba(255,255,255,.5)}
     .dot{width:10px;height:10px;border-radius:50%}
-    .tabbar{display:flex;gap:8px;margin:10px 0}
-    .tabbar button{border:1px solid var(--edge);background:rgba(239,230,206,.1);color:var(--ink);border-radius:10px;padding:6px 10px;cursor:pointer;font:600 13px Inter}
-    .tabbar button[aria-pressed="true"]{outline:2px solid var(--gold)}
-    .muted{color:var(--ink-soft)}
-    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    input[type="text"]{width:100%;max-width:520px;padding:10px;border:1px solid var(--edge);border-radius:10px;background:rgba(239,230,206,.3);color:var(--ink)}
+    .pill{display:inline-block;border:1px solid var(--edge);border-radius:999px;padding:2px 8px;margin:2px 6px 0 0;color:#664f23;background:rgba(214,166,69,.18)}
+    .error{background:#3b241f;color:#ffd3d3;border:1px solid #8a2c2c;padding:10px;border-radius:10px;margin:10px 0}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 </head>
@@ -62,11 +43,12 @@
       <button class="btn" id="exportCSV">Export CSV</button>
     </div>
   </header>
-  <div class="wrap">
 
-    <!-- Overview / skim block -->
+  <div class="wrap">
+    <div id="errorBox" class="error" style="display:none"></div>
+
     <section class="card" id="overview">
-      <div class="hd"><strong class="mono">Tavern Rumors</strong><span class="muted">auto‑summarized from all notes</span></div>
+      <div class="hd"><strong class="mono">Tavern Rumors</strong><span class="muted">auto‑summarized from notes</span></div>
       <div class="bd">
         <div class="row" id="hotRow" style="margin-bottom:8px"></div>
         <div style="display:grid;gap:12px;grid-template-columns:1fr 1fr">
@@ -82,121 +64,121 @@
       </div>
     </section>
 
-    <div class="tabbar">
-      <button id="tabTable" aria-pressed="true">Table</button>
-      <button id="tabGraph" aria-pressed="false">Graph</button>
-    </div>
-
-    <div class="cards">
-      <section class="card" id="tableView">
-        <div class="hd"><div class="row"><input id="q" type="text" placeholder="Search summaries..."/></div></div>
-        <div class="bd" style="padding:0">
-          <div style="overflow:auto;max-height:64vh;border-top:1px dashed var(--edge)">
-            <table id="tbl"><thead><tr>
-              <th style="width:70px">Session</th><th>Summary</th><th style="width:90px">Source</th>
-            </tr></thead><tbody></tbody></table>
-          </div>
+    <section class="card" id="tableView" style="margin-top:14px">
+      <div class="hd"><strong>Sessions</strong><input id="q" type="text" placeholder="Search summaries..." style="margin-left:auto;border:1px solid var(--edge);border-radius:10px;padding:8px;background:rgba(239,230,206,.3);color:var(--ink)"/></div>
+      <div class="bd" style="padding:0">
+        <div style="overflow:auto;max-height:64vh;border-top:1px dashed var(--edge)">
+          <table id="tbl"><thead><tr>
+            <th style="width:80px">Session</th><th>Summary</th><th style="width:100px">Source</th>
+          </tr></thead><tbody></tbody></table>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <section class="card" id="graphView" style="display:none;">
-        <div class="hd"><strong>Connections</strong></div>
-        <div class="bd">
-          <div class="legend" style="margin-bottom:12px">
-            <span class="chip"><span class="dot" style="background:var(--gold)"></span>Session</span>
-            <span class="chip"><span class="dot" style="background:var(--forest)"></span>Location</span>
-            <span class="chip"><span class="dot" style="background:var(--blood)"></span>NPC</span>
-            <span class="chip"><span class="dot" style="background:var(--arc)"></span>Arc</span>
-            <span class="chip"><span class="dot" style="background:var(--hook)"></span>Hook</span>
-            <span class="chip"><span class="dot" style="background:var(--loot)"></span>Loot</span>
-          </div>
-          <svg id="graph" width="100%" height="640"></svg>
+    <section class="card" id="graphView" style="margin-top:14px">
+      <div class="hd"><strong>Connections</strong></div>
+      <div class="bd">
+        <div class="legend" style="margin-bottom:12px">
+          <span class="chip"><span class="dot" style="background:var(--gold)"></span>Session</span>
+          <span class="chip"><span class="dot" style="background:var(--forest)"></span>Location</span>
+          <span class="chip"><span class="dot" style="background:var(--blood)"></span>NPC</span>
+          <span class="chip"><span class="dot" style="background:var(--arc)"></span>Arc</span>
+          <span class="chip"><span class="dot" style="background:var(--hook)"></span>Hook</span>
+          <span class="chip"><span class="dot" style="background:var(--loot)"></span>Loot</span>
         </div>
-      </section>
-    </div>
+        <svg id="graph" width="100%" height="600"></svg>
+      </div>
+    </section>
   </div>
 
 <script>
 const owner='ProfCory', repo='Celencia', folder='Celencia', ref='main';
 const model={ sessions:[], entities:{}, edges:[] };
-const colors={ Session:'var(--gold)', NPC:'var(--blood)', Location:'var(--forest)', Arc:'var(--arc)', Hook:'var(--hook)', Loot:'var(--loot)' };
+const colorVar={ Session:'--gold', NPC:'--blood', Location:'--forest', Arc:'--arc', Hook:'--hook', Loot:'--loot' };
+const css = ()=> getComputedStyle(document.documentElement);
 const byId=id=>document.getElementById(id);
 const tbody=()=>document.querySelector('#tbl tbody');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 
-// Tabs
-byId('tabTable').onclick=()=>{ byId('tableView').style.display='block'; byId('graphView').style.display='none'; byId('tabTable').setAttribute('aria-pressed','true'); byId('tabGraph').setAttribute('aria-pressed','false'); };
-byId('tabGraph').onclick=()=>{ byId('tableView').style.display='none'; byId('graphView').style.display='block'; byId('tabTable').setAttribute('aria-pressed','false'); byId('tabGraph').setAttribute('aria-pressed','true'); drawGraph(); };
+function showError(msg){ const box=byId('errorBox'); box.textContent=msg; box.style.display='block'; }
 
-// Parsing helpers
 function parseFrontMatter(text){
   const m=text.match(/^---\n([\s\S]*?)\n---\n?/); if(!m) return {fm:{}, body:text.trim()};
   const obj={}; for(const line of m[1].split(/\r?\n/)){ const i=line.indexOf(':'); if(i>0){ const k=line.slice(0,i).trim().toLowerCase(); const v=line.slice(i+1).trim(); obj[k]=v; }}
   return {fm:obj, body:text.slice(m[0].length).trim()};
 }
-function inferFromName(name){ const session=(name.match(/session[\s_-]?(\d{1,4})/i)||[])[1]||''; return {session}; }
+function inferFromName(name){ const m=name.match(/session[\s_-]?(\d{1,4})/i); return {session:m?m[1]:''}; }
 function parseLooseSections(text){
-  const lines=text.split(/\r?\n/);
-  const grab=(re)=>{ const i=lines.findIndex(l=>re.test(l));return i; };
-  const list=(i)=>{ if(i<0) return []; const s=lines.slice(i+1).join('\n'); const stop=s.search(/\n\s*\w[^\n]*:\s*\n/i); const chunk= stop>-1? s.slice(0,stop): s; return chunk.split(/[\n,]/).map(t=>t.trim()).filter(Boolean); };
-  const one=(i)=>{ if(i<0) return null; const m=lines[i].split(':'); return (m[1]||'').trim(); };
-  const iNPC=grab(/^\s*NPCs?\s*:/i); const iHook=grab(/^\s*Hooks?\s*:/i); const iArc=grab(/^\s*Arcs?\s*:/i); const iLoc=grab(/^\s*Location\s*:/i); const iLoot=grab(/^\s*Loot\s*:/i);
-  return {
-    npcs:list(iNPC), hooks:list(iHook), arcs:list(iArc), location:one(iLoc), loot:list(iLoot),
-    summary:text.split(/\n\n+/)[0].slice(0,400)
-  };
+  try{
+    const lines=text.split(/\r?\n/);
+    const find=re=>lines.findIndex(l=>re.test(l));
+    const list=i=>{ if(i<0) return []; const s=lines.slice(i+1).join('\n'); const stop=s.search(/\n\s*\w[^\n]*:\s*\n/i); const chunk=stop>-1?s.slice(0,stop):s; return chunk.split(/[\n,]/).map(t=>t.trim()).filter(Boolean); };
+    const one=i=>{ if(i<0) return null; const m=lines[i].split(':'); return (m[1]||'').trim(); };
+    const iNPC=find(/^\s*NPCs?\s*:/i), iHook=find(/^\s*Hooks?\s*:/i), iArc=find(/^\s*Arcs?\s*:/i), iLoc=find(/^\s*Location\s*:/i), iLoot=find(/^\s*Loot\s*:/i);
+    return { npcs:list(iNPC), hooks:list(iHook), arcs:list(iArc), location:one(iLoc), loot:list(iLoot), summary:text.split(/\n\n+/)[0].slice(0,400) };
+  }catch(e){ return {npcs:[],hooks:[],arcs:[],location:null,loot:[],summary:''}; }
 }
 function addEntity(type,name){ if(!name) return null; const key=type+':'+name.toLowerCase(); if(!model.entities[key]) model.entities[key]={id:key,type,name}; return model.entities[key]; }
 function connect(a,b){ if(a&&b) model.edges.push({source:a.id||a,target:b.id||b}); }
 
-async function scan(){
-  const list=`https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(folder)}?ref=${encodeURIComponent(ref)}`;
-  const res=await fetch(list); if(!res.ok){ alert('Folder list failed'); return; }
-  const items=await res.json();
-  const noteFiles=items.filter(x=>x.type==='file' && /\.(txt|md)$/i.test(x.name) && x.download_url);
-  model.sessions=[]; model.edges=[]; model.entities={};
-
-  for(const it of noteFiles){
-    const r=await fetch(it.download_url); const t=await r.text();
-    const {fm, body}=parseFrontMatter(t); const loose=parseLooseSections(body||t); const inf=inferFromName(it.name);
-    const rec={
-      session: fm.session??inf.session??'',
-      date: fm.date??null,
-      campaign: fm.campaign??null,
-      dm: fm.dm??null,
-      location: fm.location??loose.location??null,
-      arcs: (fm.arcs||'') || (loose.arcs||[]).join(', '),
-      hooks: (fm.hooks||'') || (loose.hooks||[]).join(', '),
-      npcs: (fm.npcs||'') || (loose.npcs||[]).join(', '),
-      loot: (fm.loot||'') || (loose.loot||[]).join(', '),
-      summary: body? body.split(/\n\n+/)[0].slice(0,400): loose.summary,
-      source:{ name: it.name, url: it.download_url }
-    };
-    model.sessions.push(rec);
-
-    // Graph connections
-    const S=addEntity('Session','Session '+(rec.session||rec.source.name));
-    if(rec.location) connect(S,addEntity('Location',rec.location));
-    for(const v of rec.npcs.split(/[,;]/).map(s=>s.trim()).filter(Boolean)) connect(S,addEntity('NPC',v));
-    for(const v of rec.arcs.split(/[,;]/).map(s=>s.trim()).filter(Boolean)) connect(S,addEntity('Arc',v));
-    for(const v of rec.hooks.split(/[,;]/).map(s=>s.trim()).filter(Boolean)) connect(S,addEntity('Hook',v));
-    for(const v of rec.loot.split(/[,;]/).map(s=>s.trim()).filter(Boolean)) connect(S,addEntity('Loot',v));
+async function safeFetch(url){
+  const res=await fetch(url);
+  if(!res.ok){
+    const remaining=res.headers.get('X-RateLimit-Remaining');
+    if(remaining==='0') throw new Error('GitHub API rate limit hit. Try again shortly.');
+    throw new Error('Fetch failed: '+url+' ['+res.status+']');
   }
+  return res;
+}
 
-  // Sort oldest→newest by session number if present, else filename natural
-  model.sessions.sort((a,b)=>{
-    const sa=parseInt(a.session||0,10), sb=parseInt(b.session||0,10);
-    if(!isNaN(sa) && !isNaN(sb) && sa!==sb) return sa-sb;
-    return String(a.source.name).localeCompare(String(b.source.name),undefined,{numeric:true});
-  });
+async function scan(){
+  try{
+    byId('errorBox').style.display='none';
+    const list=`https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(folder)}?ref=${encodeURIComponent(ref)}`;
+    const res=await safeFetch(list); const items=await res.json();
+    const noteFiles=items.filter(x=>x.type==='file' && /\.(txt|md)$/i.test(x.name) && x.download_url);
 
-  renderTable();
-  buildOverview();
-  drawGraph();
+    model.sessions=[]; model.edges=[]; model.entities={};
+
+    for(const it of noteFiles){
+      try{
+        const rt=await safeFetch(it.download_url); const t=await rt.text();
+        const {fm, body}=parseFrontMatter(t); const loose=parseLooseSections(body||t); const inf=inferFromName(it.name);
+        const rec={
+          session: fm.session??inf.session??'',
+          location: fm.location??loose.location??'',
+          arcs: (fm.arcs||'') || (loose.arcs||[]).join(', '),
+          hooks: (fm.hooks||'') || (loose.hooks||[]).join(', '),
+          npcs: (fm.npcs||'') || (loose.npcs||[]).join(', '),
+          loot: (fm.loot||'') || (loose.loot||[]).join(', '),
+          summary: body? body.split(/\n\n+/)[0].slice(0,400): loose.summary,
+          source:{ name: it.name, url: it.download_url }
+        };
+        model.sessions.push(rec);
+        const S=addEntity('Session','Session '+(rec.session||rec.source.name));
+        if(rec.location) connect(S,addEntity('Location',rec.location));
+        for(const v of rec.npcs.split(/[,;]/).map(s=>s.trim()).filter(Boolean)) connect(S,addEntity('NPC',v));
+        for(const v of rec.arcs.split(/[,;]/).map(s=>s.trim()).filter(Boolean)) connect(S,addEntity('Arc',v));
+        for(const v of rec.hooks.split(/[,;]/).map(s=>s.trim()).filter(Boolean)) connect(S,addEntity('Hook',v));
+        for(const v of rec.loot.split(/[,;]/).map(s=>s.trim()).filter(Boolean)) connect(S,addEntity('Loot',v));
+      }catch(e){ showError('Problem parsing '+it.name+': '+e.message); }
+    }
+
+    // Sort by session number (oldest→newest), then natural filename
+    model.sessions.sort((a,b)=>{
+      const sa=parseInt(a.session||0,10), sb=parseInt(b.session||0,10);
+      if(!isNaN(sa) && !isNaN(sb) && sa!==sb) return sa-sb;
+      return String(a.source.name).localeCompare(String(b.source.name),undefined,{numeric:true});
+    });
+
+    renderTable();
+    buildOverview();
+    drawGraph();
+  }catch(e){ showError(e.message); }
 }
 
 function renderTable(){
-  const q=(byId('q').value||'').toLowerCase();
+  const q=(byId('q')?.value||'').toLowerCase();
   const rows=model.sessions.filter(s=>!q || (s.summary||'').toLowerCase().includes(q));
   tbody().innerHTML = rows.map(s=>`<tr>
     <td class="mono">${esc(s.session||'')}</td>
@@ -206,28 +188,17 @@ function renderTable(){
 }
 
 function buildOverview(){
-  // Top NPCs (by frequency across parsed lists)
   const counts={};
-  for(const s of model.sessions){
-    for(const n of (s.npcs||'').split(/[,;]/).map(x=>x.trim()).filter(Boolean)) counts[n]=(counts[n]||0)+1;
-  }
+  for(const s of model.sessions){ for(const n of (s.npcs||'').split(/[,;]/).map(x=>x.trim()).filter(Boolean)) counts[n]=(counts[n]||0)+1; }
   const topNPCs=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,10);
   byId('topNPCs').innerHTML = topNPCs.map(([n,c])=>`<li>${esc(n)} <span class="muted">(${c})</span></li>`).join('');
-
-  // Recent events: pick sentences with strong verbs from last 6 sessions
-  const recent = model.sessions.slice(-6);
-  const verbs = /(met|fought|found|discovered|revealed|entered|escaped|rescued|sealed|opened|tracked|bargained|betrayed|allied|killed|banished|freed|bound)/i;
-  const events=[];
-  for(const s of recent){
-    const bits=(s.summary||'').split(/(?<=[.!?])\s+/).filter(x=>verbs.test(x));
-    if(bits[0]) events.push(bits[0]);
-  }
+  const recent=model.sessions.slice(-6);
+  const verbs=/(met|fought|found|discovered|revealed|entered|escaped|rescued|sealed|opened|tracked|bargained|betrayed|allied|killed|banished|freed|bound)/i;
+  const events=[]; for(const s of recent){ const bits=(s.summary||'').split(/(?<=[.!?])\s+/).filter(x=>verbs.test(x)); if(bits[0]) events.push(bits[0]); }
   byId('recentEvents').innerHTML = events.map(e=>`<li>${esc(e)}</li>`).join('');
-
-  // Hot keywords from summaries
   const blob=model.sessions.map(s=>s.summary||'').join(' ').toLowerCase();
   const keys=['curse','ritual','temple','portal','artifact','dream','prophecy','guild','shadow','warden','cabal','fortress','fog','forest','undercity'];
-  const hot = keys.filter(k=>blob.includes(k)).sort((a,b)=> (blob.split(b).length-1) - (blob.split(a).length-1));
+  const hot=keys.filter(k=>blob.includes(k)).sort((a,b)=> (blob.split(b).length-1) - (blob.split(a).length-1));
   byId('hotRow').innerHTML = hot.slice(0,8).map(k=>`<span class="pill">${esc(k)}</span>`).join('');
 }
 
@@ -237,33 +208,24 @@ function drawGraph(){
   const nodes=[...Object.values(model.entities)];
   const edges=model.edges.map(e=>({source:e.source, target:e.target}));
   const idIndex=new Map(nodes.map((n,i)=>[n.id,i]));
-  const links=edges.map(e=>({source:idIndex.get(e.source),target:idIndex.get(e.target)})).filter(x=>x.source!=null&&x.target!=null);
-
+  const links=edges.map(e=>({source:idIndex.get(e.source), target:idIndex.get(e.target)})).filter(x=>x.source!=null && x.target!=null);
   const sim=d3.forceSimulation(nodes)
     .force('link', d3.forceLink(links).distance(90).strength(0.6))
     .force('charge', d3.forceManyBody().strength(-130))
-    .force('center', d3.forceCenter(width/2,height/2))
+    .force('center', d3.forceCenter(width/2, height/2))
     .force('collide', d3.forceCollide(22));
-
   const g=svg.append('g');
-  const zoom=d3.zoom().on('zoom',ev=>g.attr('transform',ev.transform)); svg.call(zoom);
-
+  const zoom=d3.zoom().on('zoom', ev=> g.attr('transform', ev.transform)); svg.call(zoom);
   g.append('g').attr('stroke','#7a6a49').attr('stroke-opacity',0.6)
     .selectAll('line').data(links).join('line');
-
   const node=g.append('g').selectAll('g').data(nodes).join('g').call(drag(sim));
-  node.append('circle').attr('r',9).attr('fill',d=>getComputedStyle(document.documentElement).getPropertyValue(colors[d.type]?colors[d.type].replace('var(','').replace(')',''):'--gold'));
-  node.append('text').text(d=>d.name).attr('x',12).attr('y',4).attr('fill','#2b2b2b').attr('font-size','12px');
-
+  node.append('circle').attr('r',9).attr('fill', d=> css().getPropertyValue(colorVar[d.type]||'--gold').trim()||'#d6a645');
+  node.append('text').text(d=> d.name).attr('x',12).attr('y',4).attr('fill','#2b2b2b').attr('font-size','12px');
   sim.on('tick',()=>{
-    g.selectAll('line')
-      .attr('x1',d=>nodes[d.source].x)
-      .attr('y1',d=>nodes[d.source].y)
-      .attr('x2',d=>nodes[d.target].x)
-      .attr('y2',d=>nodes[d.target].y);
-    node.attr('transform',d=>`translate(${d.x},${d.y})`);
+    g.selectAll('line').attr('x1', d=> nodes[d.source].x).attr('y1', d=> nodes[d.source].y)
+      .attr('x2', d=> nodes[d.target].x).attr('y2', d=> nodes[d.target].y);
+    node.attr('transform', d=> `translate(${d.x},${d.y})`);
   });
-
   function drag(sim){
     function dragstarted(ev,d){ if(!ev.active) sim.alphaTarget(0.3).restart(); d.fx=d.x; d.fy=d.y; }
     function dragged(ev,d){ d.fx=ev.x; d.fy=ev.y; }
@@ -272,13 +234,13 @@ function drawGraph(){
   }
 }
 
-function download(name,text){ const b=new Blob([text],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; a.click(); URL.revokeObjectURL(a.href); }
-byId('exportJSON').onclick=()=>download('celencia_sessions.json',JSON.stringify(model.sessions,null,2));
+function download(name, text){ const blob=new Blob([text],{type:'text/plain'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); URL.revokeObjectURL(a.href); }
+byId('exportJSON').onclick=()=> download('celencia_sessions.json', JSON.stringify(model.sessions, null, 2));
 byId('exportCSV').onclick=()=>{
   const cols=['session','summary','location','npcs','arcs','hooks','loot','source.url'];
-  const escCSV=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+  const escCSV=v=> '"'+String(v??'').replace(/"/g,'""')+'"';
   const lines=[cols.join(',')];
-  for(const s of model.sessions){ const get=p=>p.split('.').reduce((o,k)=>o?o[k]:undefined,s); lines.push(cols.map(c=>escCSV(get(c))).join(',')); }
+  for(const s of model.sessions){ const get=p=> p.split('.').reduce((o,k)=>o?o[k]:undefined, s); lines.push(cols.map(c=>escCSV(get(c))).join(',')); }
   const blob=new Blob([lines.join('\n')],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='celencia_sessions.csv'; a.click(); URL.revokeObjectURL(a.href);
 };
 
