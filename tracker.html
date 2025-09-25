@@ -3,393 +3,244 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Campaign Session Notes Tracker</title>
+  <title>Celencia Tracker</title>
   <style>
-    :root { --gap: 12px; --radius: 14px; --shadow: 0 6px 18px rgba(0,0,0,.08); }
-    html, body { height: 100%; }
-    body { margin:0; font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell; background:#0b0d10; color:#e8ecf1; }
-    .wrap { max-width: 1100px; margin: 28px auto 56px; padding: 0 16px; }
-    header { display:flex; gap:var(--gap); align-items:center; justify-content:space-between; margin-bottom:16px; }
-    h1 { font-size: clamp(18px, 2.4vw, 28px); margin:0; font-weight:700; letter-spacing:.2px; }
-    .cards { display:grid; grid-template-columns: 1fr; gap: var(--gap); }
-    @media (min-width: 900px){ .cards { grid-template-columns: 1fr 1fr; } }
-    .card { background:#12161c; border:1px solid #1e2630; border-radius: var(--radius); box-shadow: var(--shadow); padding:16px; }
-    .card h2 { margin:0 0 10px; font-size:16px; }
-    label { display:block; margin: 6px 0 4px; color:#9fb2c8; }
-    input, select, textarea { width:100%; background:#0e1217; color:#e8ecf1; border:1px solid #1e2630; border-radius: 10px; padding:10px; }
-    input[type="checkbox"] { width:auto; }
-    .row { display:flex; gap:var(--gap); }
-    .row > * { flex:1; }
-    .btns { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
-    button, .btn { cursor:pointer; background:#1f2834; border:1px solid #2a394a; color:#e8ecf1; padding:10px 12px; border-radius:10px; }
-    button:hover { background:#273445; }
-    table { width:100%; border-collapse:collapse; font-size: 13px; }
-    th, td { text-align:left; border-bottom:1px solid #1e2630; padding:10px 8px; vertical-align: top; }
-    th { position:sticky; top:0; background:#0f141a; z-index:1; }
-    .pill { display:inline-block; padding:2px 8px; border-radius:999px; background:#1a2330; border:1px solid #294159; font-size:12px; margin:2px 6px 2px 0; }
-    .muted { color:#9fb2c8; }
-    .dropzone { border:2px dashed #2b3c50; border-radius: var(--radius); padding:20px; text-align:center; color:#9fb2c8; background:#0f141a; }
-    .foot { margin-top:24px; color:#7f93ab; font-size:12px; }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:12px; }
-    details { border:1px solid #1e2630; border-radius:10px; padding:10px 12px; background:#0f141a; }
-    summary { cursor:pointer; color:#c8d9ee; }
+    :root{--bg:#0b0d10;--ink:#e8ecf1;--muted:#9fb2c8;--panel:#11161a;--line:#223040;--accent:#70b0ff}
+    body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto}
+    header{padding:14px 18px;background:#12161c;border-bottom:1px solid var(--line)}
+    h1{margin:0;font-size:18px}
+    .wrap{max-width:1200px;margin:16px auto 40px;padding:0 16px}
+    .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    input{background:#0f141a;border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:10px}
+    button{background:#1b2634;border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:10px 12px;cursor:pointer}
+    button:hover{background:#243246}
+    .cards{display:grid;grid-template-columns:1fr;gap:12px}
+    @media(min-width:1000px){.cards{grid-template-columns: 1.1fr .9fr}}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th,td{border-bottom:1px solid var(--line);text-align:left;padding:8px 6px}
+    th{position:sticky;top:0;background:#0e131a}
+    .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+    .legend{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:999px;border:1px solid var(--line)}
+    .dot{width:10px;height:10px;border-radius:50%}
+    .tabbar{display:flex;gap:8px;margin:8px 0}
+    .tabbar button[aria-pressed="true"]{outline:2px solid var(--accent)}
+    .pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:2px 8px;margin:2px 6px 0 0;color:var(--muted);font-size:12px}
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 </head>
 <body>
+  <header>
+    <h1>Celencia Tracker</h1>
+    <div class="row">
+      <button id="scan">Rescan Notes</button>
+      <button id="exportJSON">Export JSON</button>
+      <button id="exportCSV">Export CSV</button>
+    </div>
+  </header>
   <div class="wrap">
-    <header>
-      <h1>Campaign Session Notes Tracker</h1>
-      <div class="btns">
-        <button id="exportJSON">Export JSON</button>
-        <button id="exportCSV">Export CSV</button>
-        <button id="clearData">Clear Loaded Data</button>
+
+    <!-- Master summary block -->
+    <div class="card" id="master">
+      <h3 style="margin:0 0 6px">Things to watch</h3>
+      <div id="masterHot" class="row" style="margin-bottom:6px"></div>
+      <div style="display:grid;gap:8px;grid-template-columns:1fr 1fr">
+        <div>
+          <div class="muted" style="margin-bottom:4px">Top names & places</div>
+          <ul id="masterNames" style="margin:0;padding-left:18px"></ul>
+        </div>
+        <div>
+          <div class="muted" style="margin-bottom:4px">Open questions</div>
+          <ul id="masterQs" style="margin:0;padding-left:18px"></ul>
+        </div>
       </div>
-    </header>
+    </div>
+
+    <div class="tabbar">
+      <button id="tabTable" aria-pressed="true">Table</button>
+      <button id="tabGraph" aria-pressed="false">Graph</button>
+    </div>
 
     <div class="cards">
-      <div class="card">
-        <h2>Load notes</h2>
-        <div class="row">
-          <div>
-            <label>Local files</label>
-            <div id="dropzone" class="dropzone">Drop 40+ .txt or .md files here, or <input id="filepick" type="file" accept=".txt,.md" multiple></div>
-          </div>
-        </div>
-        <div class="row">
-          <div>
-            <label>Git repo listing (optional)</label>
-            <div class="row">
-              <input id="ghOwner" placeholder="owner" class="mono" />
-              <input id="ghRepo" placeholder="repo" class="mono" />
-            </div>
-            <div class="row">
-              <input id="ghPath" placeholder="path (e.g., notes/sessions)" class="mono" />
-              <input id="ghRef" placeholder="ref/branch (default: main)" class="mono" />
-            </div>
-            <div class="btns"><button id="fetchGH">Fetch from Repo API</button></div>
-            <p class="muted">This uses the public repo API to list and fetch raw session files from a folder. Private repos will need a prebuilt JSON export or local file drop.</p>
-          </div>
+      <div class="card" id="tableView">
+        <input id="q" placeholder="Search summaries..." style="margin-bottom:8px;width:100%"/>
+        <div style="overflow:auto;max-height:64vh;border:1px solid var(--line);border-radius:10px;">
+          <table id="tbl"><thead><tr>
+            <th>#</th><th>Created</th><th>Summary</th><th>Source</th>
+          </tr></thead><tbody></tbody></table>
         </div>
       </div>
 
-      <div class="card">
-        <h2>Filters</h2>
-        <div class="row">
-          <input id="q" placeholder="Search summary, arcs, hooks, npcs, loot..." />
+      <div class="card" id="graphView" style="display:none;">
+        <div class="legend">
+          <span class="chip"><span class="dot" style="background:#66c2a5"></span>Session</span>
+          <span class="chip"><span class="dot" style="background:#fc8d62"></span>NPC</span>
+          <span class="chip"><span class="dot" style="background:#8da0cb"></span>Location</span>
+          <span class="chip"><span class="dot" style="background:#e78ac3"></span>Arc</span>
+          <span class="chip"><span class="dot" style="background:#a6d854"></span>Hook</span>
+          <span class="chip"><span class="dot" style="background:#ffd92f"></span>Loot</span>
         </div>
-        <div class="row">
-          <input id="fCampaign" placeholder="Campaign" />
-          <input id="fDM" placeholder="DM" />
-        </div>
-        <div class="row">
-          <input id="fDateFrom" type="date" />
-          <input id="fDateTo" type="date" />
-        </div>
-        <div class="btns">
-          <button id="applyFilters">Apply</button>
-          <button id="resetFilters">Reset</button>
-        </div>
-        <details style="margin-top:10px;">
-          <summary>Expected front‑matter (optional but recommended)</summary>
-          <pre class="mono">---
-session: 23
-campaign: Torchbearers
-date: 2025-09-10
-location: Steadpass
-party: Jayden; Thalion; Reegar
-players: A; B; C
-DM: Cory
-arcs: Scarred Stand; Tidebreak
-hooks: rumor about Wriggled Scrawl press; escort cargo
-npcs: Clara Stellamaris; Alerion
-loot: residuum shard; 50gp
----
-Summary paragraph(s) here…
-          </pre>
-          <p class="muted">If front‑matter is missing, the parser will try to infer <span class="mono">session</span> and <span class="mono">date</span> from the filename like <span class="mono">2025-09-10_session-23.txt</span>.</p>
-        </details>
+        <svg id="graph" width="100%" height="640"></svg>
       </div>
-    </div>
-
-    <div class="card" style="margin-top:var(--gap);">
-      <h2>Sessions</h2>
-      <div style="overflow:auto; max-height: 60vh; border:1px solid #1e2630; border-radius:10px;">
-        <table id="tbl">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Date</th>
-              <th>Campaign</th>
-              <th>DM</th>
-              <th>Location</th>
-              <th>Arcs</th>
-              <th>Hooks</th>
-              <th>NPCs</th>
-              <th>Loot</th>
-              <th>Summary</th>
-              <th>Source</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <div class="foot">Tip: click a row to view the full note in a popup.</div>
-    </div>
-
-    <div class="card" style="margin-top:var(--gap);">
-      <h2>JSON schema</h2>
-      <pre class="mono" id="schema"></pre>
     </div>
   </div>
 
   <script>
-    // Minimal data model
-    const model = {
-      sessions: [], // array of Session
-      filters: { q: '', campaign: '', dm: '', from: '', to: '' }
-    };
+  const model={ sessions:[], entities:{}, edges:[] };
+  const colors={ Session:'#66c2a5', NPC:'#fc8d62', Location:'#8da0cb', Arc:'#e78ac3', Hook:'#a6d854', Loot:'#ffd92f' };
 
-    const schema = {
-      type: "array",
-      description: "Session notes index",
-      items: {
-        type: "object",
-        properties: {
-          session: { type: ["integer", "string"], description: "Session number" },
-          date: { type: ["string", "null"], description: "YYYY-MM-DD" },
-          campaign: { type: ["string", "null"] },
-          dm: { type: ["string", "null"] },
-          location: { type: ["string", "null"] },
-          party: { type: ["string", "null"] },
-          players: { type: ["string", "null"] },
-          arcs: { type: ["string", "null"] },
-          hooks: { type: ["string", "null"] },
-          npcs: { type: ["string", "null"] },
-          loot: { type: ["string", "null"] },
-          summary: { type: ["string", "null"] },
-          source: { type: "object", properties: {
-            name: { type: "string" },
-            kind: { type: "string" }, // local|repo
-            url: { type: ["string", "null"] }
-          }}
-        },
-        required: ["source"]
-      }
-    };
-    document.getElementById('schema').textContent = JSON.stringify(schema, null, 2);
+  const byId=id=>document.getElementById(id);
+  const tbody=()=>document.querySelector('#tbl tbody');
+  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 
-    // Utilities
-    const byId = id => document.getElementById(id);
-    const tbody = document.querySelector('#tbl tbody');
-    const escapeHtml = s => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
+  // Tabs
+  byId('tabTable').onclick=()=>{ byId('tableView').style.display='block'; byId('graphView').style.display='none'; byId('tabTable').setAttribute('aria-pressed','true'); byId('tabGraph').setAttribute('aria-pressed','false'); };
+  byId('tabGraph').onclick=()=>{ byId('tableView').style.display='none'; byId('graphView').style.display='block'; byId('tabTable').setAttribute('aria-pressed','false'); byId('tabGraph').setAttribute('aria-pressed','true'); drawGraph(); };
 
-    function tryParseFrontMatter(text){
-      const m = text.match(/^---\n([\s\S]*?)\n---\n?/);
-      if(!m) return { fm: {}, body: text.trim() };
-      const fmLines = m[1].split(/\r?\n/);
-      const fm = {};
-      for(const line of fmLines){
-        const idx = line.indexOf(':');
-        if(idx > -1){
-          const key = line.slice(0, idx).trim().toLowerCase();
-          const val = line.slice(idx+1).trim();
-          fm[key] = val;
-        }
-      }
-      return { fm, body: text.slice(m[0].length).trim() };
+  // Helpers
+  function parseFrontMatter(text){
+    const m=text.match(/^---\n([\s\S]*?)\n---\n?/); if(!m) return {fm:{}, body:text.trim()};
+    const obj={}; for(const line of m[1].split(/\r?\n/)){ const i=line.indexOf(':'); if(i>0){ const k=line.slice(0,i).trim().toLowerCase(); const v=line.slice(i+1).trim(); obj[k]=v; }}
+    return {fm:obj, body:text.slice(m[0].length).trim()};
+  }
+  function inferFromName(name){ const session=(name.match(/session[\s_-]?(\d{1,4})/i)||[])[1]||null; return {session}; }
+  function firstParagraph(text){ return (text||'').split(/\n\n+/)[0].slice(0,400); }
+
+  // Get oldest commit date for a file by paging to the last commits page
+  async function fetchOldestCommitISO(path){
+    const base=`https://api.github.com/repos/ProfCory/Celencia/commits?path=${encodeURIComponent(path)}&sha=main&per_page=1`;
+    const r1=await fetch(base); if(!r1.ok) return null;
+    const link=r1.headers.get('Link');
+    if(link && link.includes('rel="last"')){
+      const m=link.match(/<[^>]*[?&]page=(\d+)[^>]*>;\s*rel="last"/); const last=m? parseInt(m[1],10):1;
+      const rLast=await fetch(base+`&page=${last}`); if(!rLast.ok) return null; const arr=await rLast.json();
+      return (arr[0]&&arr[0].commit&&arr[0].commit.author&&arr[0].commit.author.date)||null;
+    } else {
+      // Only one page; newest is also oldest
+      const arr=await r1.json(); return (arr[0]&&arr[0].commit&&arr[0].commit.author&&arr[0].commit.author.date)||null;
+    }
+  }
+
+  async function scan(){
+    const list=`https://api.github.com/repos/ProfCory/Celencia/contents/Celencia?ref=main`;
+    const res=await fetch(list); if(!res.ok){ alert('Folder list failed'); return; }
+    const items=await res.json();
+    const noteFiles=items.filter(x=>x.type==='file' && /\.(txt|md)$/i.test(x.name) && x.download_url);
+
+    model.sessions=[]; model.edges=[]; model.entities={};
+
+    for(const it of noteFiles){
+      const r=await fetch(it.download_url); const t=await r.text();
+      const {fm, body}=parseFrontMatter(t); const inf=inferFromName(it.name);
+      const createdISO = await fetchOldestCommitISO(`Celencia/${it.name}`);
+      const rec={
+        session: fm.session??inf.session??'',
+        created: createdISO? new Date(createdISO): null,
+        summary: body? firstParagraph(body): firstParagraph(t),
+        _full: body||t,
+        source:{ name: it.name, url: it.download_url }
+      };
+      model.sessions.push(rec);
+      // Graph: we only keep sessions here to avoid clutter in the simplified build
+      const Skey='Session:'+(''+(rec.session||rec.source.name)).toLowerCase();
+      if(!model.entities[Skey]) model.entities[Skey]={id:Skey,type:'Session',name:'Session '+(rec.session||rec.source.name)};
     }
 
-    function inferFromFilename(name){
-      // try YYYY-MM-DD and session digits
-      const date = (name.match(/(20\d{2}-\d{2}-\d{2})/)||[])[1] || null;
-      const session = (name.match(/session[-_\s]?(\d{1,4})/i)||[])[1] || null;
-      return { date, session };
+    // Sort by creation oldest→newest; fallback to name
+    model.sessions.sort((a,b)=>{
+      if(a.created && b.created) return a.created - b.created;
+      if(a.created) return -1; if(b.created) return 1;
+      return String(a.source.name).localeCompare(String(b.source.name), undefined, {numeric:true});
+    });
+
+    renderTable();
+    buildMasterSummary();
+    drawGraph();
+  }
+
+  function renderTable(){
+    const q=(byId('q')?byId('q').value:'').toLowerCase();
+    const rows=model.sessions.filter(s=>!q || (s.summary||'').toLowerCase().includes(q));
+    tbody().innerHTML = rows.map(s=>`<tr>
+      <td>${esc(s.session||'')}</td>
+      <td>${s.created? new Date(s.created).toISOString().slice(0,10): ''}</td>
+      <td>${esc((s.summary||'').slice(0,140))}${s.summary&&s.summary.length>140?'…':''}</td>
+      <td><a class="mono" href="${s.source.url}" target="_blank" rel="noopener">raw</a></td>
+    </tr>`).join('');
+  }
+
+  // Build "things to watch" from summaries
+  function buildMasterSummary(){
+    const text=model.sessions.map(s=>s.summary||'').join('\n');
+    const names = Object.entries(countNames(text))
+      .sort((a,b)=>b[1]-a[1]).slice(0,10);
+    const qs = extractQuestions(text).slice(0,8);
+    const hot = hotKeywords(text).slice(0,6);
+
+    const hotBox=byId('masterHot'); hotBox.innerHTML = hot.map(w=>`<span class="pill">${esc(w)}</span>`).join('');
+    byId('masterNames').innerHTML = names.map(([n,c])=>`<li>${esc(n)} <span class="muted">(${c})</span></li>`).join('');
+    byId('masterQs').innerHTML = qs.map(s=>`<li>${esc(s)}</li>`).join('');
+  }
+
+  function countNames(text){
+    const stop=new Set(['The','A','And','Or','Of','In','On','At','To','For','By','From','With','Is','It','As','An','Be','Are','Was','Were','Has','Have','Had']);
+    const m=text.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})\b/g)||[];
+    const freq={};
+    for(const raw of m){ const t=raw.trim(); if(stop.has(t)) continue; freq[t]=(freq[t]||0)+1; }
+    return freq;
+  }
+  function extractQuestions(text){
+    return text.split(/(?<=\?)\s+/).filter(s=>s && s.length>20 && s.length<180);
+  }
+  function hotKeywords(text){
+    const keys=['curse','ritual','temple','portal','artifact','blood','dream','prophecy','guild','shadow','warden','cabal','arc','hook','plot'];
+    const lower=text.toLowerCase(); const hits=[]; for(const k of keys){ if(lower.includes(k)) hits.push(k); }
+    // simple boost by frequency
+    return [...new Set(hits)].sort((a,b)=> (lower.split(b).length-1) - (lower.split(a).length-1));
+  }
+
+  function drawGraph(){
+    const svg=d3.select('#graph'); svg.selectAll('*').remove();
+    const width=svg.node().clientWidth, height=svg.node().clientHeight;
+    const nodes=[...Object.values(model.entities)];
+    const edges=model.edges.map(e=>({source:e.source, target:e.target}));
+    const idIndex=new Map(nodes.map((n,i)=>[n.id,i]));
+    const links=edges.map(e=>({source:idIndex.get(e.source), target:idIndex.get(e.target)})).filter(x=>x.source!=null && x.target!=null);
+    const sim=d3.forceSimulation(nodes)
+      .force('link', d3.forceLink(links).distance(80).strength(0.6))
+      .force('charge', d3.forceManyBody().strength(-120))
+      .force('center', d3.forceCenter(width/2, height/2))
+      .force('collide', d3.forceCollide(24));
+    const g=svg.append('g');
+    const zoom=d3.zoom().on('zoom', ev=> g.attr('transform', ev.transform));
+    svg.call(zoom);
+    g.append('g').attr('stroke','#274155').attr('stroke-opacity',0.6)
+      .selectAll('line').data(links).join('line');
+    const node=g.append('g').selectAll('g').data(nodes).join('g').call(drag(sim));
+    node.append('circle').attr('r',9).attr('fill', d=> colors[d.type]||'#ccc');
+    node.append('text').text(d=> d.name).attr('x',12).attr('y',4).attr('fill','#dbe7ff').attr('font-size','12px');
+    sim.on('tick',()=>{
+      g.selectAll('line')
+        .attr('x1', d=> nodes[d.source].x)
+        .attr('y1', d=> nodes[d.source].y)
+        .attr('x2', d=> nodes[d.target].x)
+        .attr('y2', d=> nodes[d.target].y);
+      node.attr('transform', d=> `translate(${d.x},${d.y})`);
+    });
+    function drag(sim){
+      function dragstarted(ev, d){ if(!ev.active) sim.alphaTarget(0.3).restart(); d.fx=d.x; d.fy=d.y; }
+      function dragged(ev,d){ d.fx=ev.x; d.fy=ev.y; }
+      function dragended(ev,d){ if(!ev.active) sim.alphaTarget(0); d.fx=null; d.fy=null; }
+      return d3.drag().on('start',dragstarted).on('drag',dragged).on('end',dragended);
     }
+  }
 
-    function normalizeSession(rec){
-      const copy = { ...rec };
-      if(typeof copy.session === 'string' && /^\d+$/.test(copy.session)) copy.session = parseInt(copy.session, 10);
-      if(copy.date){
-        const d = new Date(copy.date);
-        if(!isNaN(d)) copy.date = d.toISOString().slice(0,10);
-      }
-      return copy;
-    }
-
-    function recordFromText(name, text, source){
-      const { fm, body } = tryParseFrontMatter(text);
-      const infer = inferFromFilename(name);
-      const rec = normalizeSession({
-        session: fm.session ?? infer.session ?? '',
-        date: fm.date ?? infer.date ?? null,
-        campaign: fm.campaign ?? null,
-        dm: fm.dm ?? null,
-        location: fm.location ?? null,
-        party: fm.party ?? null,
-        players: fm.players ?? null,
-        arcs: fm.arcs ?? null,
-        hooks: fm.hooks ?? null,
-        npcs: fm.npcs ?? null,
-        loot: fm.loot ?? null,
-        summary: body ? body.split(/\n\n+/)[0].slice(0, 400) : null,
-        _full: body,
-        source
-      });
-      return rec;
-    }
-
-    function render(){
-      const f = model.filters;
-      const q = (f.q||'').toLowerCase();
-      const from = f.from ? new Date(f.from) : null;
-      const to = f.to ? new Date(f.to) : null;
-      const rows = model.sessions.filter(s => {
-        if(f.campaign && (s.campaign||'').toLowerCase().indexOf(f.campaign.toLowerCase()) === -1) return false;
-        if(f.dm && (s.dm||'').toLowerCase().indexOf(f.dm.toLowerCase()) === -1) return false;
-        if(from && s.date && new Date(s.date) < from) return false;
-        if(to && s.date && new Date(s.date) > to) return false;
-        if(q){
-          const blob = [s.summary, s.arcs, s.hooks, s.npcs, s.loot, s.location, s.party].filter(Boolean).join(' ').toLowerCase();
-          if(!blob.includes(q)) return false;
-        }
-        return true;
-      }).sort((a,b)=>{
-        // newest first by date, then session desc
-        if(a.date && b.date && a.date !== b.date) return a.date < b.date ? 1 : -1;
-        const sa = parseInt(a.session||0,10), sb = parseInt(b.session||0,10);
-        return sb - sa;
-      });
-
-      tbody.innerHTML = rows.map((s,i)=>{
-        const src = s.source.kind === 'repo' && s.source.url ? `<a class="mono" href="${s.source.url}" target="_blank" rel="noopener">raw</a>` : escapeHtml(s.source.name);
-        return `<tr data-i="${i}">
-          <td>${escapeHtml(String(s.session||''))}</td>
-          <td>${escapeHtml(s.date||'')}</td>
-          <td>${escapeHtml(s.campaign||'')}</td>
-          <td>${escapeHtml(s.dm||'')}</td>
-          <td>${escapeHtml(s.location||'')}</td>
-          <td>${escapeHtml(s.arcs||'')}</td>
-          <td>${escapeHtml(s.hooks||'')}</td>
-          <td>${escapeHtml(s.npcs||'')}</td>
-          <td>${escapeHtml(s.loot||'')}</td>
-          <td>${escapeHtml((s.summary||'').slice(0,140))}${(s.summary && s.summary.length>140)?'…':''}</td>
-          <td>${src}</td>
-        </tr>`;
-      }).join('');
-
-      // row click = modal
-      tbody.querySelectorAll('tr').forEach(tr => {
-        tr.onclick = () => {
-          const idx = parseInt(tr.getAttribute('data-i'),10);
-          const s = rows[idx];
-          const html = `
-            <div class="mono" style="white-space:pre-wrap;">${escapeHtml(s._full||'')}</div>
-          `;
-          const dlg = document.createElement('dialog');
-          dlg.style.width = 'min(900px, 90vw)';
-          dlg.style.border = '1px solid #2a394a';
-          dlg.style.background = '#0f141a';
-          dlg.style.color = '#e8ecf1';
-          dlg.style.padding = '16px';
-          dlg.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
-            <div><strong>Session ${escapeHtml(String(s.session||''))}</strong> · ${escapeHtml(s.date||'')} · ${escapeHtml(s.campaign||'')}</div>
-            <button id="x">Close</button>
-          </div><hr style="border-color:#1e2630;">${html}`;
-          document.body.appendChild(dlg);
-          dlg.showModal();
-          dlg.querySelector('#x').onclick = ()=>{ dlg.close(); dlg.remove(); };
-        };
-      });
-    }
-
-    function applyFilters(){
-      model.filters.q = byId('q').value.trim();
-      model.filters.campaign = byId('fCampaign').value.trim();
-      model.filters.dm = byId('fDM').value.trim();
-      model.filters.from = byId('fDateFrom').value;
-      model.filters.to = byId('fDateTo').value;
-      render();
-    }
-
-    // Export helpers
-    function download(name, text){
-      const blob = new Blob([text], {type:'text/plain'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = name;
-      a.click();
-      URL.revokeObjectURL(a.href);
-    }
-
-    function toCSV(rows){
-      const cols = ["session","date","campaign","dm","location","arcs","hooks","npcs","loot","summary","source.name","source.kind","source.url"];
-      const esc = v => '"' + String(v??'').replace(/"/g,'""') + '"';
-      const out = [cols.join(',')];
-      for(const s of rows){
-        const get = (p) => p.split('.').reduce((o,k)=>o?o[k]:undefined, s);
-        out.push(cols.map(c=>esc(get(c))).join(','));
-      }
-      return out.join('\n');
-    }
-
-    // Event wiring
-    byId('applyFilters').onclick = applyFilters;
-    byId('resetFilters').onclick = () => {
-      ['q','fCampaign','fDM','fDateFrom','fDateTo'].forEach(id=>byId(id).value='');
-      model.filters = { q:'', campaign:'', dm:'', from:'', to:'' };
-      render();
-    };
-
-    byId('exportJSON').onclick = ()=> download('session_index.json', JSON.stringify(model.sessions.map(s=>{
-      const {_full, ...safe} = s; return safe;
-    }), null, 2));
-
-    byId('exportCSV').onclick = ()=> download('session_index.csv', toCSV(model.sessions));
-
-    byId('clearData').onclick = ()=> { model.sessions = []; render(); };
-
-    // Local files
-    function handleFiles(fileList){
-      const files = Array.from(fileList).filter(f=>/\.(txt|md)$/i.test(f.name));
-      if(!files.length) return;
-      Promise.all(files.map(f=>f.text().then(t=>recordFromText(f.name, t, { name: f.name, kind: 'local', url: null }))))
-        .then(recs => { model.sessions.push(...recs); render(); });
-    }
-
-    byId('filepick').addEventListener('change', e=> handleFiles(e.target.files));
-
-    const dz = byId('dropzone');
-    dz.addEventListener('dragover', e=>{ e.preventDefault(); dz.style.background='#11161d'; });
-    dz.addEventListener('dragleave', e=>{ dz.style.background=''; });
-    dz.addEventListener('drop', e=>{ e.preventDefault(); dz.style.background=''; handleFiles(e.dataTransfer.files); });
-
-    // Repo API fetch
-    async function fetchRepo(){
-      const owner = byId('ghOwner').value.trim();
-      const repo = byId('ghRepo').value.trim();
-      const path = byId('ghPath').value.trim();
-      const ref = byId('ghRef').value.trim() || 'main';
-      if(!owner || !repo || !path) return alert('Missing owner, repo, or path');
-
-      const listUrl = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodeURIComponent(path)}?ref=${encodeURIComponent(ref)}`;
-      const res = await fetch(listUrl);
-      if(!res.ok){ alert('Repo listing failed'); return; }
-      const items = await res.json();
-      const noteFiles = items.filter(x=>x && /\.(txt|md)$/i.test(x.name) && x.download_url);
-
-      const recs = [];
-      for(const it of noteFiles){
-        const r = await fetch(it.download_url);
-        const t = await r.text();
-        recs.push(recordFromText(it.name, t, { name: it.name, kind: 'repo', url: it.download_url }));
-      }
-      model.sessions.push(...recs);
-      render();
-    }
-    byId('fetchGH').onclick = fetchRepo;
-
-    // Live filter typing with small debounce
-    let tmr; byId('q').addEventListener('input', ()=>{ clearTimeout(tmr); tmr = setTimeout(applyFilters, 200); });
+  function download(name, text){ const blob=new Blob([text],{type:'text/plain'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); URL.revokeObjectURL(a.href); }
+  byId('exportJSON').onclick=()=>{ download('celencia_sessions.json', JSON.stringify(model.sessions, null, 2)); };
+  byId('exportCSV').onclick=()=>{ const cols=["session","created","summary","source.url"]; const escCSV=v=> '"'+String(v??'').replace(/"/g,'""')+'"'; const lines=[cols.join(',')]; for(const s of model.sessions){ const get=p=> p.split('.').reduce((o,k)=>o?o[k]:undefined, s); lines.push(cols.map(c=>escCSV(get(c))).join(',')); } download('celencia_sessions.csv', lines.join('\n')); };
+  byId('scan').onclick=scan;
+  scan();
   </script>
 </body>
 </html>
