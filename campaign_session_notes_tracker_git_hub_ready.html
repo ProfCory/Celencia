@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Campaign Session Notes Tracker</title>
+  <style>
+    :root { --gap: 12px; --radius: 14px; --shadow: 0 6px 18px rgba(0,0,0,.08); }
+    html, body { height: 100%; }
+    body { margin:0; font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell; background:#0b0d10; color:#e8ecf1; }
+    .wrap { max-width: 1100px; margin: 28px auto 56px; padding: 0 16px; }
+    header { display:flex; gap:var(--gap); align-items:center; justify-content:space-between; margin-bottom:16px; }
+    h1 { font-size: clamp(18px, 2.4vw, 28px); margin:0; font-weight:700; letter-spacing:.2px; }
+    .cards { display:grid; grid-template-columns: 1fr; gap: var(--gap); }
+    @media (min-width: 900px){ .cards { grid-template-columns: 1fr 1fr; } }
+    .card { background:#12161c; border:1px solid #1e2630; border-radius: var(--radius); box-shadow: var(--shadow); padding:16px; }
+    .card h2 { margin:0 0 10px; font-size:16px; }
+    label { display:block; margin: 6px 0 4px; color:#9fb2c8; }
+    input, select, textarea { width:100%; background:#0e1217; color:#e8ecf1; border:1px solid #1e2630; border-radius: 10px; padding:10px; }
+    input[type="checkbox"] { width:auto; }
+    .row { display:flex; gap:var(--gap); }
+    .row > * { flex:1; }
+    .btns { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    button, .btn { cursor:pointer; background:#1f2834; border:1px solid #2a394a; color:#e8ecf1; padding:10px 12px; border-radius:10px; }
+    button:hover { background:#273445; }
+    table { width:100%; border-collapse:collapse; font-size: 13px; }
+    th, td { text-align:left; border-bottom:1px solid #1e2630; padding:10px 8px; vertical-align: top; }
+    th { position:sticky; top:0; background:#0f141a; z-index:1; }
+    .pill { display:inline-block; padding:2px 8px; border-radius:999px; background:#1a2330; border:1px solid #294159; font-size:12px; margin:2px 6px 2px 0; }
+    .muted { color:#9fb2c8; }
+    .dropzone { border:2px dashed #2b3c50; border-radius: var(--radius); padding:20px; text-align:center; color:#9fb2c8; background:#0f141a; }
+    .foot { margin-top:24px; color:#7f93ab; font-size:12px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:12px; }
+    details { border:1px solid #1e2630; border-radius:10px; padding:10px 12px; background:#0f141a; }
+    summary { cursor:pointer; color:#c8d9ee; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Campaign Session Notes Tracker</h1>
+      <div class="btns">
+        <button id="exportJSON">Export JSON</button>
+        <button id="exportCSV">Export CSV</button>
+        <button id="clearData">Clear Loaded Data</button>
+      </div>
+    </header>
+
+    <div class="cards">
+      <div class="card">
+        <h2>Load notes</h2>
+        <div class="row">
+          <div>
+            <label>Local files</label>
+            <div id="dropzone" class="dropzone">Drop 40+ .txt or .md files here, or <input id="filepick" type="file" accept=".txt,.md" multiple></div>
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Git repo listing (optional)</label>
+            <div class="row">
+              <input id="ghOwner" placeholder="owner" class="mono" />
+              <input id="ghRepo" placeholder="repo" class="mono" />
+            </div>
+            <div class="row">
+              <input id="ghPath" placeholder="path (e.g., notes/sessions)" class="mono" />
+              <input id="ghRef" placeholder="ref/branch (default: main)" class="mono" />
+            </div>
+            <div class="btns"><button id="fetchGH">Fetch from Repo API</button></div>
+            <p class="muted">This uses the public repo API to list and fetch raw session files from a folder. Private repos will need a prebuilt JSON export or local file drop.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Filters</h2>
+        <div class="row">
+          <input id="q" placeholder="Search summary, arcs, hooks, npcs, loot..." />
+        </div>
+        <div class="row">
+          <input id="fCampaign" placeholder="Campaign" />
+          <input id="fDM" placeholder="DM" />
+        </div>
+        <div class="row">
+          <input id="fDateFrom" type="date" />
+          <input id="fDateTo" type="date" />
+        </div>
+        <div class="btns">
+          <button id="applyFilters">Apply</button>
+          <button id="resetFilters">Reset</button>
+        </div>
+        <details style="margin-top:10px;">
+          <summary>Expected front‑matter (optional but recommended)</summary>
+          <pre class="mono">---
+session: 23
+campaign: Torchbearers
+date: 2025-09-10
+location: Steadpass
+party: Jayden; Thalion; Reegar
+players: A; B; C
+DM: Cory
+arcs: Scarred Stand; Tidebreak
+hooks: rumor about Wriggled Scrawl press; escort cargo
+npcs: Clara Stellamaris; Alerion
+loot: residuum shard; 50gp
+---
+Summary paragraph(s) here…
+          </pre>
+          <p class="muted">If front‑matter is missing, the parser will try to infer <span class="mono">session</span> and <span class="mono">date</span> from the filename like <span class="mono">2025-09-10_session-23.txt</span>.</p>
+        </details>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:var(--gap);">
+      <h2>Sessions</h2>
+      <div style="overflow:auto; max-height: 60vh; border:1px solid #1e2630; border-radius:10px;">
+        <table id="tbl">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Date</th>
+              <th>Campaign</th>
+              <th>DM</th>
+              <th>Location</th>
+              <th>Arcs</th>
+              <th>Hooks</th>
+              <th>NPCs</th>
+              <th>Loot</th>
+              <th>Summary</th>
+              <th>Source</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="foot">Tip: click a row to view the full note in a popup.</div>
+    </div>
+
+    <div class="card" style="margin-top:var(--gap);">
+      <h2>JSON schema</h2>
+      <pre class="mono" id="schema"></pre>
+    </div>
+  </div>
+
+  <script>
+    // Minimal data model
+    const model = {
+      sessions: [], // array of Session
+      filters: { q: '', campaign: '', dm: '', from: '', to: '' }
+    };
+
+    const schema = {
+      type: "array",
+      description: "Session notes index",
+      items: {
+        type: "object",
+        properties: {
+          session: { type: ["integer", "string"], description: "Session number" },
+          date: { type: ["string", "null"], description: "YYYY-MM-DD" },
+          campaign: { type: ["string", "null"] },
+          dm: { type: ["string", "null"] },
+          location: { type: ["string", "null"] },
+          party: { type: ["string", "null"] },
+          players: { type: ["string", "null"] },
+          arcs: { type: ["string", "null"] },
+          hooks: { type: ["string", "null"] },
+          npcs: { type: ["string", "null"] },
+          loot: { type: ["string", "null"] },
+          summary: { type: ["string", "null"] },
+          source: { type: "object", properties: {
+            name: { type: "string" },
+            kind: { type: "string" }, // local|repo
+            url: { type: ["string", "null"] }
+          }}
+        },
+        required: ["source"]
+      }
+    };
+    document.getElementById('schema').textContent = JSON.stringify(schema, null, 2);
+
+    // Utilities
+    const byId = id => document.getElementById(id);
+    const tbody = document.querySelector('#tbl tbody');
+    const escapeHtml = s => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
+
+    function tryParseFrontMatter(text){
+      const m = text.match(/^---\n([\s\S]*?)\n---\n?/);
+      if(!m) return { fm: {}, body: text.trim() };
+      const fmLines = m[1].split(/\r?\n/);
+      const fm = {};
+      for(const line of fmLines){
+        const idx = line.indexOf(':');
+        if(idx > -1){
+          const key = line.slice(0, idx).trim().toLowerCase();
+          const val = line.slice(idx+1).trim();
+          fm[key] = val;
+        }
+      }
+      return { fm, body: text.slice(m[0].length).trim() };
+    }
+
+    function inferFromFilename(name){
+      // try YYYY-MM-DD and session digits
+      const date = (name.match(/(20\d{2}-\d{2}-\d{2})/)||[])[1] || null;
+      const session = (name.match(/session[-_\s]?(\d{1,4})/i)||[])[1] || null;
+      return { date, session };
+    }
+
+    function normalizeSession(rec){
+      const copy = { ...rec };
+      if(typeof copy.session === 'string' && /^\d+$/.test(copy.session)) copy.session = parseInt(copy.session, 10);
+      if(copy.date){
+        const d = new Date(copy.date);
+        if(!isNaN(d)) copy.date = d.toISOString().slice(0,10);
+      }
+      return copy;
+    }
+
+    function recordFromText(name, text, source){
+      const { fm, body } = tryParseFrontMatter(text);
+      const infer = inferFromFilename(name);
+      const rec = normalizeSession({
+        session: fm.session ?? infer.session ?? '',
+        date: fm.date ?? infer.date ?? null,
+        campaign: fm.campaign ?? null,
+        dm: fm.dm ?? null,
+        location: fm.location ?? null,
+        party: fm.party ?? null,
+        players: fm.players ?? null,
+        arcs: fm.arcs ?? null,
+        hooks: fm.hooks ?? null,
+        npcs: fm.npcs ?? null,
+        loot: fm.loot ?? null,
+        summary: body ? body.split(/\n\n+/)[0].slice(0, 400) : null,
+        _full: body,
+        source
+      });
+      return rec;
+    }
+
+    function render(){
+      const f = model.filters;
+      const q = (f.q||'').toLowerCase();
+      const from = f.from ? new Date(f.from) : null;
+      const to = f.to ? new Date(f.to) : null;
+      const rows = model.sessions.filter(s => {
+        if(f.campaign && (s.campaign||'').toLowerCase().indexOf(f.campaign.toLowerCase()) === -1) return false;
+        if(f.dm && (s.dm||'').toLowerCase().indexOf(f.dm.toLowerCase()) === -1) return false;
+        if(from && s.date && new Date(s.date) < from) return false;
+        if(to && s.date && new Date(s.date) > to) return false;
+        if(q){
+          const blob = [s.summary, s.arcs, s.hooks, s.npcs, s.loot, s.location, s.party].filter(Boolean).join(' ').toLowerCase();
+          if(!blob.includes(q)) return false;
+        }
+        return true;
+      }).sort((a,b)=>{
+        // newest first by date, then session desc
+        if(a.date && b.date && a.date !== b.date) return a.date < b.date ? 1 : -1;
+        const sa = parseInt(a.session||0,10), sb = parseInt(b.session||0,10);
+        return sb - sa;
+      });
+
+      tbody.innerHTML = rows.map((s,i)=>{
+        const src = s.source.kind === 'repo' && s.source.url ? `<a class="mono" href="${s.source.url}" target="_blank" rel="noopener">raw</a>` : escapeHtml(s.source.name);
+        return `<tr data-i="${i}">
+          <td>${escapeHtml(String(s.session||''))}</td>
+          <td>${escapeHtml(s.date||'')}</td>
+          <td>${escapeHtml(s.campaign||'')}</td>
+          <td>${escapeHtml(s.dm||'')}</td>
+          <td>${escapeHtml(s.location||'')}</td>
+          <td>${escapeHtml(s.arcs||'')}</td>
+          <td>${escapeHtml(s.hooks||'')}</td>
+          <td>${escapeHtml(s.npcs||'')}</td>
+          <td>${escapeHtml(s.loot||'')}</td>
+          <td>${escapeHtml((s.summary||'').slice(0,140))}${(s.summary && s.summary.length>140)?'…':''}</td>
+          <td>${src}</td>
+        </tr>`;
+      }).join('');
+
+      // row click = modal
+      tbody.querySelectorAll('tr').forEach(tr => {
+        tr.onclick = () => {
+          const idx = parseInt(tr.getAttribute('data-i'),10);
+          const s = rows[idx];
+          const html = `
+            <div class="mono" style="white-space:pre-wrap;">${escapeHtml(s._full||'')}</div>
+          `;
+          const dlg = document.createElement('dialog');
+          dlg.style.width = 'min(900px, 90vw)';
+          dlg.style.border = '1px solid #2a394a';
+          dlg.style.background = '#0f141a';
+          dlg.style.color = '#e8ecf1';
+          dlg.style.padding = '16px';
+          dlg.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+            <div><strong>Session ${escapeHtml(String(s.session||''))}</strong> · ${escapeHtml(s.date||'')} · ${escapeHtml(s.campaign||'')}</div>
+            <button id="x">Close</button>
+          </div><hr style="border-color:#1e2630;">${html}`;
+          document.body.appendChild(dlg);
+          dlg.showModal();
+          dlg.querySelector('#x').onclick = ()=>{ dlg.close(); dlg.remove(); };
+        };
+      });
+    }
+
+    function applyFilters(){
+      model.filters.q = byId('q').value.trim();
+      model.filters.campaign = byId('fCampaign').value.trim();
+      model.filters.dm = byId('fDM').value.trim();
+      model.filters.from = byId('fDateFrom').value;
+      model.filters.to = byId('fDateTo').value;
+      render();
+    }
+
+    // Export helpers
+    function download(name, text){
+      const blob = new Blob([text], {type:'text/plain'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = name;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    function toCSV(rows){
+      const cols = ["session","date","campaign","dm","location","arcs","hooks","npcs","loot","summary","source.name","source.kind","source.url"];
+      const esc = v => '"' + String(v??'').replace(/"/g,'""') + '"';
+      const out = [cols.join(',')];
+      for(const s of rows){
+        const get = (p) => p.split('.').reduce((o,k)=>o?o[k]:undefined, s);
+        out.push(cols.map(c=>esc(get(c))).join(','));
+      }
+      return out.join('\n');
+    }
+
+    // Event wiring
+    byId('applyFilters').onclick = applyFilters;
+    byId('resetFilters').onclick = () => {
+      ['q','fCampaign','fDM','fDateFrom','fDateTo'].forEach(id=>byId(id).value='');
+      model.filters = { q:'', campaign:'', dm:'', from:'', to:'' };
+      render();
+    };
+
+    byId('exportJSON').onclick = ()=> download('session_index.json', JSON.stringify(model.sessions.map(s=>{
+      const {_full, ...safe} = s; return safe;
+    }), null, 2));
+
+    byId('exportCSV').onclick = ()=> download('session_index.csv', toCSV(model.sessions));
+
+    byId('clearData').onclick = ()=> { model.sessions = []; render(); };
+
+    // Local files
+    function handleFiles(fileList){
+      const files = Array.from(fileList).filter(f=>/\.(txt|md)$/i.test(f.name));
+      if(!files.length) return;
+      Promise.all(files.map(f=>f.text().then(t=>recordFromText(f.name, t, { name: f.name, kind: 'local', url: null }))))
+        .then(recs => { model.sessions.push(...recs); render(); });
+    }
+
+    byId('filepick').addEventListener('change', e=> handleFiles(e.target.files));
+
+    const dz = byId('dropzone');
+    dz.addEventListener('dragover', e=>{ e.preventDefault(); dz.style.background='#11161d'; });
+    dz.addEventListener('dragleave', e=>{ dz.style.background=''; });
+    dz.addEventListener('drop', e=>{ e.preventDefault(); dz.style.background=''; handleFiles(e.dataTransfer.files); });
+
+    // Repo API fetch
+    async function fetchRepo(){
+      const owner = byId('ghOwner').value.trim();
+      const repo = byId('ghRepo').value.trim();
+      const path = byId('ghPath').value.trim();
+      const ref = byId('ghRef').value.trim() || 'main';
+      if(!owner || !repo || !path) return alert('Missing owner, repo, or path');
+
+      const listUrl = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contents/${encodeURIComponent(path)}?ref=${encodeURIComponent(ref)}`;
+      const res = await fetch(listUrl);
+      if(!res.ok){ alert('Repo listing failed'); return; }
+      const items = await res.json();
+      const noteFiles = items.filter(x=>x && /\.(txt|md)$/i.test(x.name) && x.download_url);
+
+      const recs = [];
+      for(const it of noteFiles){
+        const r = await fetch(it.download_url);
+        const t = await r.text();
+        recs.push(recordFromText(it.name, t, { name: it.name, kind: 'repo', url: it.download_url }));
+      }
+      model.sessions.push(...recs);
+      render();
+    }
+    byId('fetchGH').onclick = fetchRepo;
+
+    // Live filter typing with small debounce
+    let tmr; byId('q').addEventListener('input', ()=>{ clearTimeout(tmr); tmr = setTimeout(applyFilters, 200); });
+  </script>
+</body>
+</html>
