@@ -1,4 +1,82 @@
-<!doctype html><meta charset="utf-8">
-<title>Celencia</title>
-<meta http-equiv="refresh" content="0; url=tracker.html">
-<a href="tracker.html">Continue to tracker</a>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Celencia Campaign Index</title>
+  <style>
+    body { margin:0; font: 15px/1.5 system-ui, sans-serif; background:#0b0d10; color:#e8ecf1; }
+    header { padding:20px; background:#12161c; border-bottom:1px solid #1e2630; }
+    h1 { margin:0; font-size:24px; }
+    .wrap { max-width:1100px; margin:20px auto; padding:0 16px; }
+    input { width:100%; max-width:400px; padding:10px; margin:12px 0; background:#0e1217; border:1px solid #1e2630; border-radius:8px; color:#e8ecf1; }
+    table { width:100%; border-collapse:collapse; margin-top:20px; }
+    th, td { padding:10px; border-bottom:1px solid #1e2630; text-align:left; }
+    th { background:#12161c; position:sticky; top:0; }
+    a { color:#70b0ff; text-decoration:none; }
+    a:hover { text-decoration:underline; }
+    .muted { color:#9fb2c8; font-size:13px; }
+    .folder { font-weight:bold; color:#9fd2ff; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Celencia Campaign Index</h1>
+    <p class="muted">Search and browse everything in <code>main</code>. Click a folder name to filter to its contents.</p>
+  </header>
+  <div class="wrap">
+    <input id="q" placeholder="Search files by name..." />
+    <table id="tbl">
+      <thead>
+        <tr><th>Name</th><th>Type</th><th>Size</th><th>Link</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <script>
+    let files=[];
+    let currentFilter="";
+
+    async function fetchRepo(){
+      const owner = 'ProfCory';
+      const repo = 'Celencia';
+      const ref = 'main';
+      const listUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/${ref}?recursive=1`;
+      const res = await fetch(listUrl);
+      if(!res.ok){ console.error('API fail'); return; }
+      const data = await res.json();
+      files = data.tree.filter(x=>x.type==='blob');
+      render(files);
+    }
+
+    function render(list){
+      const q = document.getElementById('q').value.toLowerCase();
+      const tbody = document.querySelector('#tbl tbody');
+      let view = list;
+      if(currentFilter){
+        view = view.filter(f=>f.path.startsWith(currentFilter));
+      }
+      tbody.innerHTML = view.filter(f=>!q || f.path.toLowerCase().includes(q))
+        .map(f=>{
+          const raw = `https://raw.githubusercontent.com/ProfCory/Celencia/main/${f.path}`;
+          const parts = f.path.split('/');
+          const folder = parts.length>1 ? parts[0] : '';
+          const folderLink = folder ? `<span class="folder" onclick="filterFolder('${folder}')">${folder}</span>/` : '';
+          return `<tr><td>${folderLink}${parts.slice(1).join('/')||parts[0]}</td><td>${f.type}</td><td>${f.size??''}</td><td><a href="${raw}" target="_blank">raw</a></td></tr>`;
+        }).join('');
+    }
+
+    function filterFolder(folder){
+      if(currentFilter===folder){
+        currentFilter="";
+      } else {
+        currentFilter=folder;
+      }
+      render(files);
+    }
+
+    document.getElementById('q').addEventListener('input', ()=>render(files));
+    fetchRepo();
+  </script>
+</body>
+</html>
