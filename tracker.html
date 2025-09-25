@@ -1,61 +1,86 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Celencia Tracker</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Celencia — Session Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    :root{--bg:#0b0d10;--ink:#e8ecf1;--muted:#9fb2c8;--panel:#11161a;--line:#223040;--accent:#70b0ff}
-    body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto}
-    header{padding:14px 18px;background:#12161c;border-bottom:1px solid var(--line)}
-    h1{margin:0;font-size:18px}
-    .wrap{max-width:1200px;margin:16px auto 40px;padding:0 16px}
-    .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-    input{background:#0f141a;border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:10px}
-    button{background:#1b2634;border:1px solid var(--line);border-radius:10px;color:var(--ink);padding:10px 12px;cursor:pointer}
-    button:hover{background:#243246}
-    .cards{display:grid;grid-template-columns:1fr;gap:12px}
-    @media(min-width:1000px){.cards{grid-template-columns: 1.1fr .9fr}}
-    .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
-    table{width:100%;border-collapse:collapse;font-size:13px}
-    th,td{border-bottom:1px solid var(--line);text-align:left;padding:8px 6px}
-    th{position:sticky;top:0;background:#0e131a}
+    :root{
+      --bg:#1b1711;           /* tavern walls */
+      --paper:#efe6ce;        /* parchment */
+      --ink:#2b2b2b;          /* ink */
+      --ink-soft:#5c5648;
+      --edge:#d2c7a3;         /* deckled edge */
+      --gold:#d6a645;         /* accent */
+      --blood:#ad3a3a;        /* danger */
+      --forest:#2f7f5f;       /* location */
+      --arc:#7b5fb5;          /* arc */
+      --hook:#c77c2e;         /* hook */
+      --loot:#6b7280;         /* loot */
+    }
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);font:14px/1.5 Inter,system-ui,sans-serif;color:var(--paper)}
+    header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px;border-bottom:1px solid #2a241a;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(0,0,0,.1))}
+    h1{margin:0;font:700 28px/1.1 Cinzel,serif;letter-spacing:.5px}
+    .wrap{max-width:1200px;margin:20px auto 60px;padding:0 16px}
+    .btn{border:1px solid var(--edge);background:rgba(239,230,206,.08);color:var(--paper);border-radius:10px;padding:9px 12px;cursor:pointer}
+    .btn:hover{background:rgba(239,230,206,.15)}
+    .cards{display:grid;grid-template-columns:1fr;gap:14px}
+    @media(min-width:1100px){.cards{grid-template-columns:1.1fr .9fr}}
+    .card{background:radial-gradient(1200px 300px at -10% -10%,rgba(255,255,255,.06),transparent),
+                   radial-gradient(800px 300px at 110% 0%,rgba(255,255,255,.04),transparent),
+                   var(--paper);
+          color:var(--ink);border:1px solid var(--edge);border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.35)}
+    .card .hd{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px dashed var(--edge)}
+    .card .bd{padding:12px 14px}
     .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
-    .legend{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px}
-    .chip{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:999px;border:1px solid var(--line)}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px;border-bottom:1px dashed var(--edge);vertical-align:top}
+    th{font:700 12px/1.2 Cinzel,serif;text-transform:uppercase;letter-spacing:.6px;color:#5e4a2e;background:linear-gradient(180deg,rgba(0,0,0,.03),transparent)}
+    a{color:#0a58a6;text-decoration:none}
+    a:hover{text-decoration:underline}
+    .pill{display:inline-block;border:1px solid var(--edge);border-radius:999px;padding:2px 8px;margin:2px 6px 0 0;color:#664f23;background:rgba(214,166,69,.18)}
+    .legend{display:flex;gap:8px;flex-wrap:wrap}
+    .chip{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;border:1px solid var(--edge);background:rgba(255,255,255,.5)}
     .dot{width:10px;height:10px;border-radius:50%}
-    .tabbar{display:flex;gap:8px;margin:8px 0}
-    .tabbar button[aria-pressed="true"]{outline:2px solid var(--accent)}
-    .pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:2px 8px;margin:2px 6px 0 0;color:var(--muted);font-size:12px}
+    .tabbar{display:flex;gap:8px;margin:10px 0}
+    .tabbar button{border:1px solid var(--edge);background:rgba(239,230,206,.1);color:var(--ink);border-radius:10px;padding:6px 10px;cursor:pointer;font:600 13px Inter}
+    .tabbar button[aria-pressed="true"]{outline:2px solid var(--gold)}
+    .muted{color:var(--ink-soft)}
+    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    input[type="text"]{width:100%;max-width:520px;padding:10px;border:1px solid var(--edge);border-radius:10px;background:rgba(239,230,206,.3);color:var(--ink)}
   </style>
   <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 </head>
 <body>
   <header>
-    <h1>Celencia Tracker</h1>
+    <h1>Celencia • Session Tracker</h1>
     <div class="row">
-      <button id="scan">Rescan Notes</button>
-      <button id="exportJSON">Export JSON</button>
-      <button id="exportCSV">Export CSV</button>
+      <button class="btn" id="scan">Rescan</button>
+      <button class="btn" id="exportJSON">Export JSON</button>
+      <button class="btn" id="exportCSV">Export CSV</button>
     </div>
   </header>
   <div class="wrap">
 
-    <!-- Master summary block -->
-    <div class="card" id="master">
-      <h3 style="margin:0 0 6px">Things to watch</h3>
-      <div id="masterHot" class="row" style="margin-bottom:6px"></div>
-      <div style="display:grid;gap:8px;grid-template-columns:1fr 1fr">
-        <div>
-          <div class="muted" style="margin-bottom:4px">Top names & places</div>
-          <ul id="masterNames" style="margin:0;padding-left:18px"></ul>
-        </div>
-        <div>
-          <div class="muted" style="margin-bottom:4px">Open questions</div>
-          <ul id="masterQs" style="margin:0;padding-left:18px"></ul>
+    <!-- Overview / skim block -->
+    <section class="card" id="overview">
+      <div class="hd"><strong class="mono">Tavern Rumors</strong><span class="muted">auto‑summarized from all notes</span></div>
+      <div class="bd">
+        <div class="row" id="hotRow" style="margin-bottom:8px"></div>
+        <div style="display:grid;gap:12px;grid-template-columns:1fr 1fr">
+          <div>
+            <div class="muted" style="margin-bottom:6px">Notable people</div>
+            <ul id="topNPCs" style="margin:0;padding-left:18px"></ul>
+          </div>
+          <div>
+            <div class="muted" style="margin-bottom:6px">Recent events</div>
+            <ul id="recentEvents" style="margin:0;padding-left:18px"></ul>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
 
     <div class="tabbar">
       <button id="tabTable" aria-pressed="true">Table</button>
@@ -63,184 +88,202 @@
     </div>
 
     <div class="cards">
-      <div class="card" id="tableView">
-        <input id="q" placeholder="Search summaries..." style="margin-bottom:8px;width:100%"/>
-        <div style="overflow:auto;max-height:64vh;border:1px solid var(--line);border-radius:10px;">
-          <table id="tbl"><thead><tr>
-            <th>#</th><th>Created</th><th>Summary</th><th>Source</th>
-          </tr></thead><tbody></tbody></table>
+      <section class="card" id="tableView">
+        <div class="hd"><div class="row"><input id="q" type="text" placeholder="Search summaries..."/></div></div>
+        <div class="bd" style="padding:0">
+          <div style="overflow:auto;max-height:64vh;border-top:1px dashed var(--edge)">
+            <table id="tbl"><thead><tr>
+              <th style="width:70px">Session</th><th>Summary</th><th style="width:90px">Source</th>
+            </tr></thead><tbody></tbody></table>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div class="card" id="graphView" style="display:none;">
-        <div class="legend">
-          <span class="chip"><span class="dot" style="background:#66c2a5"></span>Session</span>
-          <span class="chip"><span class="dot" style="background:#fc8d62"></span>NPC</span>
-          <span class="chip"><span class="dot" style="background:#8da0cb"></span>Location</span>
-          <span class="chip"><span class="dot" style="background:#e78ac3"></span>Arc</span>
-          <span class="chip"><span class="dot" style="background:#a6d854"></span>Hook</span>
-          <span class="chip"><span class="dot" style="background:#ffd92f"></span>Loot</span>
+      <section class="card" id="graphView" style="display:none;">
+        <div class="hd"><strong>Connections</strong></div>
+        <div class="bd">
+          <div class="legend" style="margin-bottom:12px">
+            <span class="chip"><span class="dot" style="background:var(--gold)"></span>Session</span>
+            <span class="chip"><span class="dot" style="background:var(--forest)"></span>Location</span>
+            <span class="chip"><span class="dot" style="background:var(--blood)"></span>NPC</span>
+            <span class="chip"><span class="dot" style="background:var(--arc)"></span>Arc</span>
+            <span class="chip"><span class="dot" style="background:var(--hook)"></span>Hook</span>
+            <span class="chip"><span class="dot" style="background:var(--loot)"></span>Loot</span>
+          </div>
+          <svg id="graph" width="100%" height="640"></svg>
         </div>
-        <svg id="graph" width="100%" height="640"></svg>
-      </div>
+      </section>
     </div>
   </div>
 
-  <script>
-  const model={ sessions:[], entities:{}, edges:[] };
-  const colors={ Session:'#66c2a5', NPC:'#fc8d62', Location:'#8da0cb', Arc:'#e78ac3', Hook:'#a6d854', Loot:'#ffd92f' };
+<script>
+const owner='ProfCory', repo='Celencia', folder='Celencia', ref='main';
+const model={ sessions:[], entities:{}, edges:[] };
+const colors={ Session:'var(--gold)', NPC:'var(--blood)', Location:'var(--forest)', Arc:'var(--arc)', Hook:'var(--hook)', Loot:'var(--loot)' };
+const byId=id=>document.getElementById(id);
+const tbody=()=>document.querySelector('#tbl tbody');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 
-  const byId=id=>document.getElementById(id);
-  const tbody=()=>document.querySelector('#tbl tbody');
-  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
+// Tabs
+byId('tabTable').onclick=()=>{ byId('tableView').style.display='block'; byId('graphView').style.display='none'; byId('tabTable').setAttribute('aria-pressed','true'); byId('tabGraph').setAttribute('aria-pressed','false'); };
+byId('tabGraph').onclick=()=>{ byId('tableView').style.display='none'; byId('graphView').style.display='block'; byId('tabTable').setAttribute('aria-pressed','false'); byId('tabGraph').setAttribute('aria-pressed','true'); drawGraph(); };
 
-  // Tabs
-  byId('tabTable').onclick=()=>{ byId('tableView').style.display='block'; byId('graphView').style.display='none'; byId('tabTable').setAttribute('aria-pressed','true'); byId('tabGraph').setAttribute('aria-pressed','false'); };
-  byId('tabGraph').onclick=()=>{ byId('tableView').style.display='none'; byId('graphView').style.display='block'; byId('tabTable').setAttribute('aria-pressed','false'); byId('tabGraph').setAttribute('aria-pressed','true'); drawGraph(); };
+// Parsing helpers
+function parseFrontMatter(text){
+  const m=text.match(/^---\n([\s\S]*?)\n---\n?/); if(!m) return {fm:{}, body:text.trim()};
+  const obj={}; for(const line of m[1].split(/\r?\n/)){ const i=line.indexOf(':'); if(i>0){ const k=line.slice(0,i).trim().toLowerCase(); const v=line.slice(i+1).trim(); obj[k]=v; }}
+  return {fm:obj, body:text.slice(m[0].length).trim()};
+}
+function inferFromName(name){ const session=(name.match(/session[\s_-]?(\d{1,4})/i)||[])[1]||''; return {session}; }
+function parseLooseSections(text){
+  const lines=text.split(/\r?\n/);
+  const grab=(re)=>{ const i=lines.findIndex(l=>re.test(l));return i; };
+  const list=(i)=>{ if(i<0) return []; const s=lines.slice(i+1).join('\n'); const stop=s.search(/\n\s*\w[^\n]*:\s*\n/i); const chunk= stop>-1? s.slice(0,stop): s; return chunk.split(/[\n,]/).map(t=>t.trim()).filter(Boolean); };
+  const one=(i)=>{ if(i<0) return null; const m=lines[i].split(':'); return (m[1]||'').trim(); };
+  const iNPC=grab(/^\s*NPCs?\s*:/i); const iHook=grab(/^\s*Hooks?\s*:/i); const iArc=grab(/^\s*Arcs?\s*:/i); const iLoc=grab(/^\s*Location\s*:/i); const iLoot=grab(/^\s*Loot\s*:/i);
+  return {
+    npcs:list(iNPC), hooks:list(iHook), arcs:list(iArc), location:one(iLoc), loot:list(iLoot),
+    summary:text.split(/\n\n+/)[0].slice(0,400)
+  };
+}
+function addEntity(type,name){ if(!name) return null; const key=type+':'+name.toLowerCase(); if(!model.entities[key]) model.entities[key]={id:key,type,name}; return model.entities[key]; }
+function connect(a,b){ if(a&&b) model.edges.push({source:a.id||a,target:b.id||b}); }
 
-  // Helpers
-  function parseFrontMatter(text){
-    const m=text.match(/^---\n([\s\S]*?)\n---\n?/); if(!m) return {fm:{}, body:text.trim()};
-    const obj={}; for(const line of m[1].split(/\r?\n/)){ const i=line.indexOf(':'); if(i>0){ const k=line.slice(0,i).trim().toLowerCase(); const v=line.slice(i+1).trim(); obj[k]=v; }}
-    return {fm:obj, body:text.slice(m[0].length).trim()};
-  }
-  function inferFromName(name){ const session=(name.match(/session[\s_-]?(\d{1,4})/i)||[])[1]||null; return {session}; }
-  function firstParagraph(text){ return (text||'').split(/\n\n+/)[0].slice(0,400); }
+async function scan(){
+  const list=`https://api.github.com/repos/${owner}/${repo}/contents/${encodeURIComponent(folder)}?ref=${encodeURIComponent(ref)}`;
+  const res=await fetch(list); if(!res.ok){ alert('Folder list failed'); return; }
+  const items=await res.json();
+  const noteFiles=items.filter(x=>x.type==='file' && /\.(txt|md)$/i.test(x.name) && x.download_url);
+  model.sessions=[]; model.edges=[]; model.entities={};
 
-  // Get oldest commit date for a file by paging to the last commits page
-  async function fetchOldestCommitISO(path){
-    const base=`https://api.github.com/repos/ProfCory/Celencia/commits?path=${encodeURIComponent(path)}&sha=main&per_page=1`;
-    const r1=await fetch(base); if(!r1.ok) return null;
-    const link=r1.headers.get('Link');
-    if(link && link.includes('rel="last"')){
-      const m=link.match(/<[^>]*[?&]page=(\d+)[^>]*>;\s*rel="last"/); const last=m? parseInt(m[1],10):1;
-      const rLast=await fetch(base+`&page=${last}`); if(!rLast.ok) return null; const arr=await rLast.json();
-      return (arr[0]&&arr[0].commit&&arr[0].commit.author&&arr[0].commit.author.date)||null;
-    } else {
-      // Only one page; newest is also oldest
-      const arr=await r1.json(); return (arr[0]&&arr[0].commit&&arr[0].commit.author&&arr[0].commit.author.date)||null;
-    }
-  }
+  for(const it of noteFiles){
+    const r=await fetch(it.download_url); const t=await r.text();
+    const {fm, body}=parseFrontMatter(t); const loose=parseLooseSections(body||t); const inf=inferFromName(it.name);
+    const rec={
+      session: fm.session??inf.session??'',
+      date: fm.date??null,
+      campaign: fm.campaign??null,
+      dm: fm.dm??null,
+      location: fm.location??loose.location??null,
+      arcs: (fm.arcs||'') || (loose.arcs||[]).join(', '),
+      hooks: (fm.hooks||'') || (loose.hooks||[]).join(', '),
+      npcs: (fm.npcs||'') || (loose.npcs||[]).join(', '),
+      loot: (fm.loot||'') || (loose.loot||[]).join(', '),
+      summary: body? body.split(/\n\n+/)[0].slice(0,400): loose.summary,
+      source:{ name: it.name, url: it.download_url }
+    };
+    model.sessions.push(rec);
 
-  async function scan(){
-    const list=`https://api.github.com/repos/ProfCory/Celencia/contents/Celencia?ref=main`;
-    const res=await fetch(list); if(!res.ok){ alert('Folder list failed'); return; }
-    const items=await res.json();
-    const noteFiles=items.filter(x=>x.type==='file' && /\.(txt|md)$/i.test(x.name) && x.download_url);
-
-    model.sessions=[]; model.edges=[]; model.entities={};
-
-    for(const it of noteFiles){
-      const r=await fetch(it.download_url); const t=await r.text();
-      const {fm, body}=parseFrontMatter(t); const inf=inferFromName(it.name);
-      const createdISO = await fetchOldestCommitISO(`Celencia/${it.name}`);
-      const rec={
-        session: fm.session??inf.session??'',
-        created: createdISO? new Date(createdISO): null,
-        summary: body? firstParagraph(body): firstParagraph(t),
-        _full: body||t,
-        source:{ name: it.name, url: it.download_url }
-      };
-      model.sessions.push(rec);
-      // Graph: we only keep sessions here to avoid clutter in the simplified build
-      const Skey='Session:'+(''+(rec.session||rec.source.name)).toLowerCase();
-      if(!model.entities[Skey]) model.entities[Skey]={id:Skey,type:'Session',name:'Session '+(rec.session||rec.source.name)};
-    }
-
-    // Sort by creation oldest→newest; fallback to name
-    model.sessions.sort((a,b)=>{
-      if(a.created && b.created) return a.created - b.created;
-      if(a.created) return -1; if(b.created) return 1;
-      return String(a.source.name).localeCompare(String(b.source.name), undefined, {numeric:true});
-    });
-
-    renderTable();
-    buildMasterSummary();
-    drawGraph();
+    // Graph connections
+    const S=addEntity('Session','Session '+(rec.session||rec.source.name));
+    if(rec.location) connect(S,addEntity('Location',rec.location));
+    for(const v of rec.npcs.split(/[,;]/).map(s=>s.trim()).filter(Boolean)) connect(S,addEntity('NPC',v));
+    for(const v of rec.arcs.split(/[,;]/).map(s=>s.trim()).filter(Boolean)) connect(S,addEntity('Arc',v));
+    for(const v of rec.hooks.split(/[,;]/).map(s=>s.trim()).filter(Boolean)) connect(S,addEntity('Hook',v));
+    for(const v of rec.loot.split(/[,;]/).map(s=>s.trim()).filter(Boolean)) connect(S,addEntity('Loot',v));
   }
 
-  function renderTable(){
-    const q=(byId('q')?byId('q').value:'').toLowerCase();
-    const rows=model.sessions.filter(s=>!q || (s.summary||'').toLowerCase().includes(q));
-    tbody().innerHTML = rows.map(s=>`<tr>
-      <td>${esc(s.session||'')}</td>
-      <td>${s.created? new Date(s.created).toISOString().slice(0,10): ''}</td>
-      <td>${esc((s.summary||'').slice(0,140))}${s.summary&&s.summary.length>140?'…':''}</td>
-      <td><a class="mono" href="${s.source.url}" target="_blank" rel="noopener">raw</a></td>
-    </tr>`).join('');
-  }
+  // Sort oldest→newest by session number if present, else filename natural
+  model.sessions.sort((a,b)=>{
+    const sa=parseInt(a.session||0,10), sb=parseInt(b.session||0,10);
+    if(!isNaN(sa) && !isNaN(sb) && sa!==sb) return sa-sb;
+    return String(a.source.name).localeCompare(String(b.source.name),undefined,{numeric:true});
+  });
 
-  // Build "things to watch" from summaries
-  function buildMasterSummary(){
-    const text=model.sessions.map(s=>s.summary||'').join('\n');
-    const names = Object.entries(countNames(text))
-      .sort((a,b)=>b[1]-a[1]).slice(0,10);
-    const qs = extractQuestions(text).slice(0,8);
-    const hot = hotKeywords(text).slice(0,6);
+  renderTable();
+  buildOverview();
+  drawGraph();
+}
 
-    const hotBox=byId('masterHot'); hotBox.innerHTML = hot.map(w=>`<span class="pill">${esc(w)}</span>`).join('');
-    byId('masterNames').innerHTML = names.map(([n,c])=>`<li>${esc(n)} <span class="muted">(${c})</span></li>`).join('');
-    byId('masterQs').innerHTML = qs.map(s=>`<li>${esc(s)}</li>`).join('');
-  }
+function renderTable(){
+  const q=(byId('q').value||'').toLowerCase();
+  const rows=model.sessions.filter(s=>!q || (s.summary||'').toLowerCase().includes(q));
+  tbody().innerHTML = rows.map(s=>`<tr>
+    <td class="mono">${esc(s.session||'')}</td>
+    <td>${esc((s.summary||'').slice(0,160))}${s.summary&&s.summary.length>160?'…':''}</td>
+    <td><a class="mono" href="${s.source.url}" target="_blank" rel="noopener">raw</a></td>
+  `).join('');
+}
 
-  function countNames(text){
-    const stop=new Set(['The','A','And','Or','Of','In','On','At','To','For','By','From','With','Is','It','As','An','Be','Are','Was','Were','Has','Have','Had']);
-    const m=text.match(/\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})\b/g)||[];
-    const freq={};
-    for(const raw of m){ const t=raw.trim(); if(stop.has(t)) continue; freq[t]=(freq[t]||0)+1; }
-    return freq;
+function buildOverview(){
+  // Top NPCs (by frequency across parsed lists)
+  const counts={};
+  for(const s of model.sessions){
+    for(const n of (s.npcs||'').split(/[,;]/).map(x=>x.trim()).filter(Boolean)) counts[n]=(counts[n]||0)+1;
   }
-  function extractQuestions(text){
-    return text.split(/(?<=\?)\s+/).filter(s=>s && s.length>20 && s.length<180);
-  }
-  function hotKeywords(text){
-    const keys=['curse','ritual','temple','portal','artifact','blood','dream','prophecy','guild','shadow','warden','cabal','arc','hook','plot'];
-    const lower=text.toLowerCase(); const hits=[]; for(const k of keys){ if(lower.includes(k)) hits.push(k); }
-    // simple boost by frequency
-    return [...new Set(hits)].sort((a,b)=> (lower.split(b).length-1) - (lower.split(a).length-1));
-  }
+  const topNPCs=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  byId('topNPCs').innerHTML = topNPCs.map(([n,c])=>`<li>${esc(n)} <span class="muted">(${c})</span></li>`).join('');
 
-  function drawGraph(){
-    const svg=d3.select('#graph'); svg.selectAll('*').remove();
-    const width=svg.node().clientWidth, height=svg.node().clientHeight;
-    const nodes=[...Object.values(model.entities)];
-    const edges=model.edges.map(e=>({source:e.source, target:e.target}));
-    const idIndex=new Map(nodes.map((n,i)=>[n.id,i]));
-    const links=edges.map(e=>({source:idIndex.get(e.source), target:idIndex.get(e.target)})).filter(x=>x.source!=null && x.target!=null);
-    const sim=d3.forceSimulation(nodes)
-      .force('link', d3.forceLink(links).distance(80).strength(0.6))
-      .force('charge', d3.forceManyBody().strength(-120))
-      .force('center', d3.forceCenter(width/2, height/2))
-      .force('collide', d3.forceCollide(24));
-    const g=svg.append('g');
-    const zoom=d3.zoom().on('zoom', ev=> g.attr('transform', ev.transform));
-    svg.call(zoom);
-    g.append('g').attr('stroke','#274155').attr('stroke-opacity',0.6)
-      .selectAll('line').data(links).join('line');
-    const node=g.append('g').selectAll('g').data(nodes).join('g').call(drag(sim));
-    node.append('circle').attr('r',9).attr('fill', d=> colors[d.type]||'#ccc');
-    node.append('text').text(d=> d.name).attr('x',12).attr('y',4).attr('fill','#dbe7ff').attr('font-size','12px');
-    sim.on('tick',()=>{
-      g.selectAll('line')
-        .attr('x1', d=> nodes[d.source].x)
-        .attr('y1', d=> nodes[d.source].y)
-        .attr('x2', d=> nodes[d.target].x)
-        .attr('y2', d=> nodes[d.target].y);
-      node.attr('transform', d=> `translate(${d.x},${d.y})`);
-    });
-    function drag(sim){
-      function dragstarted(ev, d){ if(!ev.active) sim.alphaTarget(0.3).restart(); d.fx=d.x; d.fy=d.y; }
-      function dragged(ev,d){ d.fx=ev.x; d.fy=ev.y; }
-      function dragended(ev,d){ if(!ev.active) sim.alphaTarget(0); d.fx=null; d.fy=null; }
-      return d3.drag().on('start',dragstarted).on('drag',dragged).on('end',dragended);
-    }
+  // Recent events: pick sentences with strong verbs from last 6 sessions
+  const recent = model.sessions.slice(-6);
+  const verbs = /(met|fought|found|discovered|revealed|entered|escaped|rescued|sealed|opened|tracked|bargained|betrayed|allied|killed|banished|freed|bound)/i;
+  const events=[];
+  for(const s of recent){
+    const bits=(s.summary||'').split(/(?<=[.!?])\s+/).filter(x=>verbs.test(x));
+    if(bits[0]) events.push(bits[0]);
   }
+  byId('recentEvents').innerHTML = events.map(e=>`<li>${esc(e)}</li>`).join('');
 
-  function download(name, text){ const blob=new Blob([text],{type:'text/plain'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); URL.revokeObjectURL(a.href); }
-  byId('exportJSON').onclick=()=>{ download('celencia_sessions.json', JSON.stringify(model.sessions, null, 2)); };
-  byId('exportCSV').onclick=()=>{ const cols=["session","created","summary","source.url"]; const escCSV=v=> '"'+String(v??'').replace(/"/g,'""')+'"'; const lines=[cols.join(',')]; for(const s of model.sessions){ const get=p=> p.split('.').reduce((o,k)=>o?o[k]:undefined, s); lines.push(cols.map(c=>escCSV(get(c))).join(',')); } download('celencia_sessions.csv', lines.join('\n')); };
-  byId('scan').onclick=scan;
-  scan();
-  </script>
+  // Hot keywords from summaries
+  const blob=model.sessions.map(s=>s.summary||'').join(' ').toLowerCase();
+  const keys=['curse','ritual','temple','portal','artifact','dream','prophecy','guild','shadow','warden','cabal','fortress','fog','forest','undercity'];
+  const hot = keys.filter(k=>blob.includes(k)).sort((a,b)=> (blob.split(b).length-1) - (blob.split(a).length-1));
+  byId('hotRow').innerHTML = hot.slice(0,8).map(k=>`<span class="pill">${esc(k)}</span>`).join('');
+}
+
+function drawGraph(){
+  const svg=d3.select('#graph'); svg.selectAll('*').remove();
+  const width=svg.node().clientWidth, height=svg.node().clientHeight;
+  const nodes=[...Object.values(model.entities)];
+  const edges=model.edges.map(e=>({source:e.source, target:e.target}));
+  const idIndex=new Map(nodes.map((n,i)=>[n.id,i]));
+  const links=edges.map(e=>({source:idIndex.get(e.source),target:idIndex.get(e.target)})).filter(x=>x.source!=null&&x.target!=null);
+
+  const sim=d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(links).distance(90).strength(0.6))
+    .force('charge', d3.forceManyBody().strength(-130))
+    .force('center', d3.forceCenter(width/2,height/2))
+    .force('collide', d3.forceCollide(22));
+
+  const g=svg.append('g');
+  const zoom=d3.zoom().on('zoom',ev=>g.attr('transform',ev.transform)); svg.call(zoom);
+
+  g.append('g').attr('stroke','#7a6a49').attr('stroke-opacity',0.6)
+    .selectAll('line').data(links).join('line');
+
+  const node=g.append('g').selectAll('g').data(nodes).join('g').call(drag(sim));
+  node.append('circle').attr('r',9).attr('fill',d=>getComputedStyle(document.documentElement).getPropertyValue(colors[d.type]?colors[d.type].replace('var(','').replace(')',''):'--gold'));
+  node.append('text').text(d=>d.name).attr('x',12).attr('y',4).attr('fill','#2b2b2b').attr('font-size','12px');
+
+  sim.on('tick',()=>{
+    g.selectAll('line')
+      .attr('x1',d=>nodes[d.source].x)
+      .attr('y1',d=>nodes[d.source].y)
+      .attr('x2',d=>nodes[d.target].x)
+      .attr('y2',d=>nodes[d.target].y);
+    node.attr('transform',d=>`translate(${d.x},${d.y})`);
+  });
+
+  function drag(sim){
+    function dragstarted(ev,d){ if(!ev.active) sim.alphaTarget(0.3).restart(); d.fx=d.x; d.fy=d.y; }
+    function dragged(ev,d){ d.fx=ev.x; d.fy=ev.y; }
+    function dragended(ev,d){ if(!ev.active) sim.alphaTarget(0); d.fx=null; d.fy=null; }
+    return d3.drag().on('start',dragstarted).on('drag',dragged).on('end',dragended);
+  }
+}
+
+function download(name,text){ const b=new Blob([text],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; a.click(); URL.revokeObjectURL(a.href); }
+byId('exportJSON').onclick=()=>download('celencia_sessions.json',JSON.stringify(model.sessions,null,2));
+byId('exportCSV').onclick=()=>{
+  const cols=['session','summary','location','npcs','arcs','hooks','loot','source.url'];
+  const escCSV=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+  const lines=[cols.join(',')];
+  for(const s of model.sessions){ const get=p=>p.split('.').reduce((o,k)=>o?o[k]:undefined,s); lines.push(cols.map(c=>escCSV(get(c))).join(',')); }
+  const blob=new Blob([lines.join('\n')],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='celencia_sessions.csv'; a.click(); URL.revokeObjectURL(a.href);
+};
+
+byId('scan').onclick=scan;
+scan();
+</script>
 </body>
 </html>
