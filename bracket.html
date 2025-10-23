@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>9-Player Double Elimination</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            line-height: 1.6;
+        }
+        .tournament {
+            display: flex;
+            flex-direction: row;
+        }
+        .bracket {
+            flex: 1;
+            padding: 20px;
+            border-right: 2px solid #ccc;
+        }
+        .bracket:last-child {
+            border-right: none;
+        }
+        h2 {
+            text-align: center;
+            border-bottom: 2px solid #aaa;
+            padding-bottom: 5px;
+        }
+        ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        li {
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            padding: 5px;
+        }
+        .round {
+            margin-left: 20px;
+        }
+        .match {
+            display: flex;
+            flex-direction: column;
+        }
+        .player {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            min-height: 1.2em;
+        }
+        .player:last-child {
+            border-bottom: none;
+        }
+        .player:hover {
+            background-color: #f0f8ff;
+        }
+        .spacer {
+            height: 30px;
+        }
+        .connector {
+            /* Basic connectors could be added with more complex CSS */
+        }
+    </style>
+</head>
+<body>
+    <h1>9-Player Tournament Bracket</h1>
+
+    <div class="tournament">
+        <div class="bracket">
+            <h2>Winner's Bracket</h2>
+            <div style="display:flex; justify-content: space-around;">
+                <ul class="round">
+                    <li><strong>Round 1 (Play-in)</strong></li>
+                    <li class="match" id="W1">
+                        <span class="player" contenteditable="true">Mayar (8)</span>
+                        <span class="player" contenteditable="true">Dark Feather (9)</span>
+                    </li>
+                </ul>
+                <ul class="round">
+                    <li><strong>Round 2 (Quarters)</strong></li>
+                    <li class="match" id="W2">
+                        <span class="player" contenteditable="true">Ki-Sai (1)</span>
+                        <span class="player" contenteditable="true">--- Winner W1 ---</span>
+                    </li>
+                    <li class="match" id="W3">
+                        <span class="player" contenteditable="true">Caan (4)</span>
+                        <span class="player" contenteditable="true">Yeves (5)</span>
+                    </li>
+                    <li class="match" id="W4">
+                        <span class="player" contenteditable="true">Thalion (3)</span>
+                        <span class="player" contenteditable="true">Hai Ruk (6)</span>
+                    </li>
+                    <li class="match" id="W5">
+                        <span class="player" contenteditable="true">Vincent (2)</span>
+                        <span class="player" contenteditable="true">Simone (7)</span>
+                    </li>
+                </ul>
+                <ul class="round">
+                    <li><strong>Round 3 (Semis)</strong></li>
+                    <li class="spacer"></li>
+                    <li class="match" id="W6">
+                        <span class="player" contenteditable="true">--- Winner W2 ---</span>
+                        <span class="player" contenteditable="true">--- Winner W3 ---</span>
+                    </li>
+                    <li class="spacer"></li>
+                    <li class="spacer"></li>
+                    <li class="match" id="W7">
+                        <span class="player" contenteditable="true">--- Winner W4 ---</span>
+                        <span class="player" contenteditable="true">--- Winner W5 ---</span>
+                    </li>
+                </ul>
+                <ul class="round">
+                    <li><strong>Round 4 (Final)</strong></li>
+                    <li class="spacer"></li>
+                    <li class="spacer"></li>
+                    <li class="spacer"></li>
+                    <li class="match" id="W8">
+                        <span class="player" contenteditable="true">--- Winner W6 ---</span>
+                        <span class="player" contenteditable="true">--- Winner W7 ---</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="bracket">
+            <h2>Loser's Bracket</h2>
+            <div style="display:flex; justify-content: space-around;">
+                <ul class="round">
+                    <li><strong>LB Round 1</strong></li>
+                    <li class="match" id="L1">
+                        <span class="player" contenteditable="true">--- Loser W3 ---</span>
+                        <span class="player" contenteditable="true">--- Loser W4 ---</span>
+                    </li>
+                    <li><strong>LB Round 2</strong></li>
+                    <li class="match" id="L2">
+                        <span class="player" contenteditable="true">--- Loser W1 ---</span>
+                        <span class="player" contenteditable="true">--- Loser W2 ---</span>
+                    </li>
+                    <li class="match" id="L3">
+                        <span class="player" contenteditable="true">--- Loser W5 ---</span>
+                        <span class="player" contenteditable="true">--- Winner L1 ---</span>
+                    </li>
+                </ul>
+                <ul class="round">
+                    <li><strong>LB Round 3</strong></li>
+                    <li class="spacer"></li>
+                    <li class="match" id="L4">
+                        <span class="player" contenteditable="true">--- Winner L2 ---</span>
+                        <span class="player" contenteditable="true">--- Winner L3 ---</span>
+                    </li>
+                    <li><strong>LB Round 4</strong></li>
+                    <li class="match" id="L5">
+                        <span class="player" contenteditable="true">--- Loser W6 ---</span>
+                        <span class="player" contenteditable="true">--- Winner L4 ---</span>
+                    </li>
+                </ul>
+                <ul class="round">
+                    <li><strong>LB Round 5</strong></li>
+                    <li class="spacer"></li>
+                    <li class="match" id="L6">
+                        <span class="player" contenteditable="true">--- Loser W7 ---</span>
+                        <span class="player" contenteditable="true">--- Winner L5 ---</span>
+                    </li>
+                    <li><strong>LB Round 6 (Final)</strong></li>
+                    <li class="match" id="L7">
+                        <span class="player" contenteditable="true">--- Loser W8 ---</span>
+                        <span class="player" contenteditable="true">--- Winner L6 ---</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="bracket">
+            <h2>Grand Finals</h2>
+            <ul class="round">
+                <li><strong>Final 1</strong></li>
+                <li class="match" id="G1">
+                    <span class="player" contenteditable="true">--- Winner W8 ---</span>
+                    <span class="player" contenteditable="true">--- Winner L7 ---</span>
+                </li>
+                <li><strong>Final 2 (If LB Winner wins G1)</strong></li>
+                <li class="match" id="G2">
+                    <span class="player" contenteditable="true">--- Winner G1 ---</span>
+                    <span class="player" contenteditable="true">--- Winner G1 ---</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
